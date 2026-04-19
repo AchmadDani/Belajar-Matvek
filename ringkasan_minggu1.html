@@ -1,0 +1,1042 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MAVEK Minggu 1 — Matriks dan Operasinya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #21253a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43e97b;
+      --accent4: #f9a825;
+      --text: #e2e8f0;
+      --text-muted: #8892b0;
+      --text-dim: #495670;
+      --card-glow: rgba(108, 99, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0f1117 0%, #1a1333 50%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+      top: -200px; left: 50%; transform: translateX(-50%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.4);
+      color: #a78bfa;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #6c63ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 500px;
+      margin: 0 auto 32px;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 28px;
+      font-weight: 800;
+      color: #a78bfa;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── PROGRESS ── */
+    .progress-bar-wrap {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .progress-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6c63ff, #ff6584);
+      border-radius: 6px;
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+    .progress-pct { font-size: 12px; color: #a78bfa; font-weight: 700; min-width: 36px; }
+
+    /* ── MAIN LAYOUT ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+    .section:hover { box-shadow: 0 0 0 1px var(--accent), 0 8px 40px var(--card-glow); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      cursor: pointer;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .section-header:hover { background: #252940; }
+    .section-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 400;
+    }
+    .chevron {
+      color: var(--text-muted);
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+    .section.open .chevron { transform: rotate(180deg); }
+
+    .section-body {
+      display: none;
+      padding: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    .section.open .section-body { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── CARDS ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.25s ease;
+      cursor: default;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(108,99,255,0.15);
+    }
+    .card-icon { font-size: 24px; margin-bottom: 10px; }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+    .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ── TABLE ── */
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    .styled-table th {
+      background: rgba(108,99,255,0.15);
+      color: #a78bfa;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      border-bottom: 2px solid rgba(108,99,255,0.3);
+    }
+    .styled-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+    }
+    .styled-table tr:last-child td { border-bottom: none; }
+    .styled-table tr:hover td { background: rgba(108,99,255,0.05); }
+
+    /* ── MATRIX DISPLAY ── */
+    .matrix-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    .matrix-label { font-size: 14px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .matrix {
+      display: inline-block;
+      position: relative;
+      padding: 8px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 2;
+    }
+    .matrix::before, .matrix::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 4px;
+      border: 2px solid #a78bfa;
+    }
+    .matrix::before { left: 0; border-right: none; border-radius: 3px 0 0 3px; }
+    .matrix::after  { right: 0; border-left: none;  border-radius: 0 3px 3px 0; }
+    .matrix-row { display: flex; gap: 20px; }
+    .matrix-cell { min-width: 32px; text-align: right; color: var(--text); }
+    .matrix-cell.diag { color: #6c63ff; font-weight: 700; }
+
+    /* ── HIGHLIGHT BOXES ── */
+    .info-box {
+      background: rgba(108,99,255,0.08);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-left: 4px solid #6c63ff;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .warn-box {
+      background: rgba(255,101,132,0.08);
+      border: 1px solid rgba(255,101,132,0.3);
+      border-left: 4px solid #ff6584;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .success-box {
+      background: rgba(67,233,123,0.08);
+      border: 1px solid rgba(67,233,123,0.3);
+      border-left: 4px solid #43e97b;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .box-title { font-weight: 700; margin-bottom: 8px; }
+    .info-box .box-title { color: #a78bfa; }
+    .warn-box .box-title { color: #ff6584; }
+    .success-box .box-title { color: #43e97b; }
+
+    /* ── QUIZ FLASHCARD ── */
+    .quiz-section { margin-top: 24px; }
+    .quiz-title { font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+    .flashcard {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .flashcard:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--card-glow); }
+    .flashcard-q { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .flashcard-hint { font-size: 12px; color: var(--text-dim); }
+    .flashcard-a {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: #43e97b;
+      line-height: 1.7;
+      animation: fadeIn 0.3s ease;
+    }
+    .flashcard.revealed .flashcard-a { display: block; }
+    .flashcard.revealed { border-color: #43e97b; background: rgba(67,233,123,0.03); }
+    .reveal-tag {
+      position: absolute;
+      top: 24px; right: 24px;
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--surface2);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .flashcard.revealed .reveal-tag { background: rgba(67,233,123,0.15); color: #43e97b; }
+
+    /* ── FORMULA ── */
+    .formula-block {
+      background: var(--bg);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 12px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: #a78bfa;
+      line-height: 1.8;
+    }
+    .formula-title { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── STEP LIST ── */
+    .step-list { list-style: none; margin-top: 12px; }
+    .step-list li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px; height: 28px;
+      background: rgba(108,99,255,0.2);
+      border: 1px solid rgba(108,99,255,0.4);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #a78bfa;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── KEY POINTS ── */
+    .key-points { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+    .key-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      transition: all 0.25s;
+    }
+    .key-point:hover { border-color: var(--accent); background: rgba(108,99,255,0.04); }
+    .key-point-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+
+    /* ── SCROLLBACK ── */
+    .back-btn {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.5);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s;
+      z-index: 200;
+    }
+    .back-btn:hover { transform: scale(1.1); background: #7c75ff; }
+
+    /* ── TAGS ── */
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 2px 4px 2px 0;
+    }
+    .tag-purple { background: rgba(108,99,255,0.2); color: #a78bfa; }
+    .tag-green  { background: rgba(67,233,123,0.2);  color: #43e97b; }
+    .tag-red    { background: rgba(255,101,132,0.2); color: #ff6584; }
+    .tag-yellow { background: rgba(249,168,37,0.2);  color: #f9a825; }
+
+    /* ── MISC ── */
+    h3 { font-size: 15px; font-weight: 700; color: #fff; margin: 20px 0 10px; }
+    p { font-size: 14px; line-height: 1.8; color: var(--text-muted); margin-bottom: 12px; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(108,99,255,0.15);
+      color: #a78bfa;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    @media (max-width: 600px) {
+      .hero-stats { gap: 20px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .matrix-wrap { gap: 10px; }
+    }
+    /* ── FOOTER COPYRIGHT ── */
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px;
+      text-align: center;
+      border-top: 1px solid #2e3350;
+      background: transparent;
+    }
+    .site-footer a {
+      color: #8892b0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .site-footer a:hover { color: #fff; }
+    .site-footer a::before { content: '©'; margin-right: 2px; }  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">📐 CAK1MAB3 — S1 Informatika</div>
+  <h1>Matriks dan Operasinya</h1>
+  <p>Rangkuman interaktif Minggu 1 — Matriks dan Ruang Vektor (MAVEK)</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">7</div><div class="stat-label">Topik Utama</div></div>
+    <div class="stat"><div class="stat-num">6</div><div class="stat-label">Jenis Matriks</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Flashcard Latihan</div></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar-wrap">
+  <span class="progress-label">📖 Progress Belajar</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-pct" id="progressPct">0%</span>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- SECTION 1: DEFINISI -->
+  <div class="section open" data-section="1">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(108,99,255,0.15);">📦</div>
+      <div>
+        <div class="section-title">1. Definisi Matriks</div>
+        <div class="section-subtitle">Pengertian, notasi, dan elemen matriks</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Matriks adalah <strong>kumpulan bilangan yang tersusun atas baris dan kolom</strong> dalam bentuk persegi panjang.</p>
+
+      <div class="formula-block">
+        <div class="formula-title">Notasi Umum</div>
+        A = [aᵢⱼ]  →  matriks berorde m × n<br>
+        i = nomor baris (1 hingga m)<br>
+        j = nomor kolom (1 hingga n)
+      </div>
+
+      <h3>Visualisasi Matriks 2×3:</h3>
+      <div class="matrix-wrap">
+        <div class="matrix">
+          <div class="matrix-row"><div class="matrix-cell diag">a₁₁</div><div class="matrix-cell">a₁₂</div><div class="matrix-cell">a₁₃</div></div>
+          <div class="matrix-row"><div class="matrix-cell">a₂₁</div><div class="matrix-cell diag">a₂₂</div><div class="matrix-cell">a₂₃</div></div>
+        </div>
+        <div style="font-size:13px; color:var(--text-muted);">← Elemen diagonal ditandai biru (a₁₁, a₂₂, ...)</div>
+      </div>
+
+      <div class="info-box">
+        <div class="box-title">💡 Unsur Diagonal</div>
+        Unsur diagonal adalah elemen dengan indeks baris = kolom: <code>a₁₁, a₂₂, a₃₃, ...</code><br>
+        Contoh: pada A = [[1,2,3],[4,5,6]] → diagonal = <strong>1</strong> (a₁₁) dan <strong>5</strong> (a₂₂)
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">🖼️</div>
+          <div class="card-title">Citra Digital</div>
+          <div class="card-desc">Setiap piksel gambar disimpan sebagai nilai dalam matriks.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔗</div>
+          <div class="card-title">Graf / Jaringan</div>
+          <div class="card-desc">Matriks ketetanggaan merepresentasikan hubungan antar simpul.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📡</div>
+          <div class="card-title">Frekuensi Kanal</div>
+          <div class="card-desc">Alokasi sinyal/frekuensi pada jaringan komunikasi.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <div class="card-title">Riset Operasi</div>
+          <div class="card-desc">Pemodelan dan optimasi masalah linear.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: KESETARAAN -->
+  <div class="section" data-section="2">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(255,101,132,0.15);">⚖️</div>
+      <div>
+        <div class="section-title">2. Kesetaraan Matriks</div>
+        <div class="section-subtitle">Kapan dua matriks dikatakan sama?</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Dua matriks A dan B dikatakan <strong>sama (A = B)</strong> jika memenuhi DUA syarat sekaligus:</p>
+      <ul class="step-list">
+        <li><span class="step-num">1</span><span>Ukurannya <strong>(orde) sama</strong> — jumlah baris dan kolom identik</span></li>
+        <li><span class="step-num">2</span><span>Setiap elemennya sama: <code>aᵢⱼ = bᵢⱼ</code> untuk semua i dan j</span></li>
+      </ul>
+      <div class="warn-box">
+        <div class="box-title">⚠️ Perhatikan!</div>
+        Matriks berbeda ukuran <strong>tidak akan pernah sama</strong>, meskipun elemen-elemennya identik.
+        Contoh: matriks 2×2 ≠ matriks 2×3 walau isinya serupa.
+      </div>
+      <div class="info-box">
+        <div class="box-title">📝 Contoh</div>
+        A = [[1,2],[3,4]] &nbsp;&nbsp; B = [[1,x],[3,4]]<br><br>
+        → Jika <strong>x = 2</strong> maka A = B ✅<br>
+        → Jika <strong>x ≠ 2</strong> maka A ≠ B ❌
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: JENIS-JENIS -->
+  <div class="section" data-section="3">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(67,233,123,0.15);">🗂️</div>
+      <div>
+        <div class="section-title">3. Jenis-jenis Matriks</div>
+        <div class="section-subtitle">6 jenis matriks yang wajib diketahui</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>Jenis</th>
+            <th>Syarat</th>
+            <th>Contoh Visual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-purple">Bujur Sangkar</span></td>
+            <td>Jumlah baris = jumlah kolom (m = n)</td>
+            <td><code>A₃ₓ₃</code> → 3 baris, 3 kolom</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-green">Diagonal</span></td>
+            <td>Bujur sangkar; elemen non-diagonal = 0</td>
+            <td><code>diag(3,9,2)</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-yellow">Simetris</span></td>
+            <td>Bujur sangkar; <code>aᵢⱼ = aⱼᵢ</code> → A = Aᵀ</td>
+            <td><code>[[1,2],[2,1]]</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-purple">Satuan (I)</span></td>
+            <td>Diagonal dengan semua elemen diagonal = 1</td>
+            <td><code>I₃ = diag(1,1,1)</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-red">Nol</span></td>
+            <td>Semua elemen = 0</td>
+            <td><code>[[0,0],[0,0]]</code></td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-green">Segitiga Atas</span></td>
+            <td>Semua elemen di <em>bawah</em> diagonal = 0</td>
+            <td>Seperti huruf ▲</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-yellow">Segitiga Bawah</span></td>
+            <td>Semua elemen di <em>atas</em> diagonal = 0</td>
+            <td>Seperti huruf ▽</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Visualisasi Matriks Segitiga:</h3>
+      <div class="matrix-wrap">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Segitiga Atas (A)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell diag">3</div><div class="matrix-cell">2</div><div class="matrix-cell">3</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell diag">9</div><div class="matrix-cell">2</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell diag">2</div></div>
+          </div>
+        </div>
+        <div style="font-size:20px;color:var(--text-dim);">vs</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Segitiga Bawah (B)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell diag">3</div><div class="matrix-cell">0</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell diag">9</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">2</div><div class="matrix-cell diag">2</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="success-box">
+        <div class="box-title">💡 Tips Hafalan</div>
+        Matriks <strong>Nol</strong> (semua elemen = 0) bersifat: segitiga atas ✅ segitiga bawah ✅ diagonal ✅ simetris ✅ — karena memenuhi semua syarat!
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: TRANSPOS -->
+  <div class="section" data-section="4">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(249,168,37,0.15);">🔄</div>
+      <div>
+        <div class="section-title">4. Transpos Matriks</div>
+        <div class="section-subtitle">Menukar baris jadi kolom</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Transpos matriks A (ditulis <code>Aᵀ</code>) adalah hasil dari <strong>menukar posisi baris dan kolom</strong>.</p>
+
+      <div class="formula-block">
+        <div class="formula-title">Rumus</div>
+        Jika A berorde m × n, maka Aᵀ berorde n × m<br>
+        Elemen (Aᵀ)ᵢⱼ = Aⱼᵢ
+      </div>
+
+      <h3>Contoh Transpos:</h3>
+      <div class="matrix-wrap">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">B (2×3)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">2</div><div class="matrix-cell">3</div></div>
+            <div class="matrix-row"><div class="matrix-cell">4</div><div class="matrix-cell">5</div><div class="matrix-cell">6</div></div>
+          </div>
+        </div>
+        <div style="font-size:28px; color:#a78bfa; font-weight:300;">→</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Bᵀ (3×2)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">4</div></div>
+            <div class="matrix-row"><div class="matrix-cell">2</div><div class="matrix-cell">5</div></div>
+            <div class="matrix-row"><div class="matrix-cell">3</div><div class="matrix-cell">6</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="box-title">🔑 Hubungan Transpos dan Simetris</div>
+        Matriks A dikatakan <strong>simetris</strong> jika dan hanya jika <code>A = Aᵀ</code><br><br>
+        Artinya: element baris ke-i kolom ke-j = elemen baris ke-j kolom ke-i
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: OPERASI -->
+  <div class="section" data-section="5">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(108,99,255,0.15);">🔢</div>
+      <div>
+        <div class="section-title">5. Operasi Matriks</div>
+        <div class="section-subtitle">Penjumlahan, perkalian skalar, dan perkalian matriks</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+
+      <!-- Sub: Penjumlahan -->
+      <h3>A. Penjumlahan Matriks</h3>
+      <div class="warn-box">
+        <div class="box-title">⚠️ Syarat Wajib</div>
+        Kedua matriks harus berorde <strong>sama persis</strong> (m₁ = m₂ dan n₁ = n₂)
+      </div>
+      <div class="formula-block">
+        <div class="formula-title">Cara hitung</div>
+        (A + B)ᵢⱼ = aᵢⱼ + bᵢⱼ  ← jumlahkan elemen di posisi yang sama
+      </div>
+      <div class="matrix-wrap">
+        <div class="matrix">
+          <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">2</div></div>
+          <div class="matrix-row"><div class="matrix-cell">3</div><div class="matrix-cell">4</div></div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">+</div>
+        <div class="matrix">
+          <div class="matrix-row"><div class="matrix-cell">5</div><div class="matrix-cell">6</div></div>
+          <div class="matrix-row"><div class="matrix-cell">7</div><div class="matrix-cell">8</div></div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">=</div>
+        <div class="matrix">
+          <div class="matrix-row"><div class="matrix-cell diag">6</div><div class="matrix-cell diag">8</div></div>
+          <div class="matrix-row"><div class="matrix-cell diag">10</div><div class="matrix-cell diag">12</div></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Sub: Perkalian Skalar -->
+      <h3>B. Perkalian Skalar dengan Matriks</h3>
+      <p>Kalikan <strong>setiap elemen</strong> matriks dengan nilai skalar <code>c</code>.</p>
+      <div class="formula-block">
+        <div class="formula-title">Cara hitung</div>
+        (c × A)ᵢⱼ = c × aᵢⱼ
+      </div>
+      <div class="matrix-wrap">
+        <span style="font-size:20px; color:#a78bfa; font-weight:700;">-1 ×</span>
+        <div class="matrix">
+          <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">4</div><div class="matrix-cell">5</div></div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">=</div>
+        <div class="matrix">
+          <div class="matrix-row"><div class="matrix-cell diag">-1</div><div class="matrix-cell diag">-2</div><div class="matrix-cell diag">-1</div></div>
+          <div class="matrix-row"><div class="matrix-cell diag">-1</div><div class="matrix-cell diag">-4</div><div class="matrix-cell diag">-5</div></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Sub: Perkalian Matriks -->
+      <h3>C. Perkalian Matriks × Matriks</h3>
+      <div class="warn-box">
+        <div class="box-title">⚠️ Syarat Perkalian A × B</div>
+        Jumlah <strong>kolom A</strong> harus = jumlah <strong>baris B</strong><br>
+        A(p×q) × B(m×n) → bisa dikalikan hanya jika <strong>q = m</strong><br>
+        Hasil berorde: <strong>p × n</strong>
+      </div>
+
+      <div class="formula-block">
+        <div class="formula-title">Rumus Elemen Hasil (AB)ᵢⱼ</div>
+        (AB)ᵢⱼ = aᵢ₁·b₁ⱼ + aᵢ₂·b₂ⱼ + ... + aᵢᵣ·bᵣⱼ<br>
+                = Σ aᵢₖ·bₖⱼ  (k dari 1 sampai r)
+      </div>
+
+      <h3>1. Perkalian Matriks Beda Orde (2×2 dengan 2×3)</h3>
+      <p style="margin-bottom: 8px;">Syarat terpenuhi: Kolom A (2) = Baris B (2). Hasil barunya berorde <strong>2×3</strong>.</p>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom: 16px;">
+        <span style="color:#ff6584; font-weight:bold;">Baris X</span> dikalikan dengan <span style="color:#43e97b; font-weight:bold;">Kolom Y</span>.
+      </p>
+
+      <div class="matrix-wrap" style="background: rgba(108,99,255,0.05); padding: 16px; border-radius: 12px; border: 1px dashed var(--border);">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">X (2×2)</div>
+          <div class="matrix">
+            <div class="matrix-row" style="background: rgba(255,101,132,0.15); border-radius: 4px;"><div class="matrix-cell" style="color:#ff6584; font-weight:bold;">1</div><div class="matrix-cell" style="color:#ff6584; font-weight:bold;">-1</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">1</div></div>
+          </div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">×</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Y (2×3)</div>
+          <div class="matrix" style="position: relative;">
+            <div style="position: absolute; left: 8px; top: 0; bottom: 0; width: 44px; background: rgba(67,233,123,0.15); border-radius: 4px; z-index: 0;"></div>
+            <div class="matrix-row" style="position: relative; z-index: 1;"><div class="matrix-cell" style="color:#43e97b; font-weight:bold;">3</div><div class="matrix-cell">2</div><div class="matrix-cell">3</div></div>
+            <div class="matrix-row" style="position: relative; z-index: 1;"><div class="matrix-cell" style="color:#43e97b; font-weight:bold;">-1</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div></div>
+          </div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">=</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">XY (Baris 1 Kolom 1)</div>
+          <div class="matrix">
+            <div class="matrix-row" style="background: rgba(108,99,255,0.15); border-radius: 4px;"><div class="matrix-cell" style="color:#fff; font-weight:bold;">4</div><div class="matrix-cell">...</div><div class="matrix-cell">...</div></div>
+            <div class="matrix-row"><div class="matrix-cell">...</div><div class="matrix-cell">...</div><div class="matrix-cell">...</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">
+        <span style="color:#a78bfa; font-weight:bold;">Perhitungan Elemen (1,1):</span> 
+        (<span style="color:#ff6584;">1</span> × <span style="color:#43e97b;">3</span>) + (<span style="color:#ff6584;">-1</span> × <span style="color:#43e97b;">-1</span>) = 3 + 1 = <strong>4</strong><br>
+        <em>Ulangi baris 1 dikali kolom 2 dan 3 untuk mengisi elemen lainnya.</em>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3>2. Perkalian Matriks Orde Sama (3×3 dengan 3×3)</h3>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom: 16px;">
+        Prosesnya sama, panjang barisnya lebih banyak. Kita kalikan <span style="color:#ff6584; font-weight:bold;">Baris ke-2</span> dengan <span style="color:#43e97b; font-weight:bold;">Kolom ke-3</span>.
+      </p>
+
+      <div class="matrix-wrap" style="background: rgba(108,99,255,0.05); padding: 16px; border-radius: 12px; border: 1px dashed var(--border);">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">A (3×3)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">2</div><div class="matrix-cell">3</div></div>
+            <div class="matrix-row" style="background: rgba(255,101,132,0.15); border-radius: 4px;"><div class="matrix-cell" style="color:#ff6584; font-weight:bold;">4</div><div class="matrix-cell" style="color:#ff6584; font-weight:bold;">5</div><div class="matrix-cell" style="color:#ff6584; font-weight:bold;">6</div></div>
+            <div class="matrix-row"><div class="matrix-cell">7</div><div class="matrix-cell">8</div><div class="matrix-cell">9</div></div>
+          </div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">×</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">B (3×3)</div>
+          <div class="matrix" style="position: relative;">
+            <div style="position: absolute; right: 8px; top: 0; bottom: 0; width: 44px; background: rgba(67,233,123,0.15); border-radius: 4px; z-index: 0;"></div>
+            <div class="matrix-row" style="position: relative; z-index: 1;"><div class="matrix-cell">9</div><div class="matrix-cell">8</div><div class="matrix-cell" style="color:#43e97b; font-weight:bold;">7</div></div>
+            <div class="matrix-row" style="position: relative; z-index: 1;"><div class="matrix-cell">6</div><div class="matrix-cell">5</div><div class="matrix-cell" style="color:#43e97b; font-weight:bold;">4</div></div>
+            <div class="matrix-row" style="position: relative; z-index: 1;"><div class="matrix-cell">3</div><div class="matrix-cell">2</div><div class="matrix-cell" style="color:#43e97b; font-weight:bold;">1</div></div>
+          </div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">=</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">AB (Baris 2 Kolom 3)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell">...</div><div class="matrix-cell">...</div><div class="matrix-cell">...</div></div>
+            <div class="matrix-row"><div class="matrix-cell">...</div><div class="matrix-cell">...</div><div class="matrix-cell" style="color:#fff; font-weight:bold; background: rgba(108,99,255,0.3); border-radius: 4px;">54</div></div>
+            <div class="matrix-row"><div class="matrix-cell">...</div><div class="matrix-cell">...</div><div class="matrix-cell">...</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">
+        <span style="color:#a78bfa; font-weight:bold;">Perhitungan Elemen (2,3):</span> 
+        (<span style="color:#ff6584;">4</span> × <span style="color:#43e97b;">7</span>) + (<span style="color:#ff6584;">5</span> × <span style="color:#43e97b;">4</span>) + (<span style="color:#ff6584;">6</span> × <span style="color:#43e97b;">1</span>) = 28 + 20 + 6 = <strong>54</strong>
+      </div>
+
+      <div class="warn-box" style="margin-top:20px;">
+        <div class="box-title">🚩 Perkalian Matriks TIDAK Komutatif!</div>
+        Secara umum: <code>A × B ≠ B × A</code><br>
+        Bahkan B × A mungkin tidak bisa dihitung jika ordenya tidak cocok!
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: FLASHCARD -->
+  <div class="section" data-section="6">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(255,101,132,0.15);">🃏</div>
+      <div>
+        <div class="section-title">6. Flashcard Latihan</div>
+        <div class="section-subtitle">Klik kartu untuk lihat jawaban</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="quiz-section">
+        <div class="quiz-title">🎯 Klik kartu untuk reveal jawaban</div>
+
+        <div class="flashcard" onclick="revealCard(this)">
+          <div class="flashcard-q">❓ Apa syarat agar dua matriks A dan B bisa dijumlahkan?</div>
+          <div class="flashcard-hint">💡 Perhatikan ukurannya...</div>
+          <span class="reveal-tag">Tap untuk jawaban</span>
+          <div class="flashcard-a">✅ Kedua matriks harus berorde <strong>sama</strong> — jumlah baris dan kolom identik.</div>
+        </div>
+
+        <div class="flashcard" onclick="revealCard(this)">
+          <div class="flashcard-q">❓ Diketahui A berorde 3×4 dan B berorde 4×2. Berapakah orde hasil A×B?</div>
+          <div class="flashcard-hint">💡 Kolom A = Baris B → hasil = baris A × kolom B</div>
+          <span class="reveal-tag">Tap untuk jawaban</span>
+          <div class="flashcard-a">✅ Orde A×B = <strong>3×2</strong>. Karena kolom A (4) = baris B (4) ✓, hasilnya berorde baris A × kolom B = 3×2.</div>
+        </div>
+
+        <div class="flashcard" onclick="revealCard(this)">
+          <div class="flashcard-q">❓ Apakah benar bahwa matriks satuan (I) termasuk jenis matriks diagonal?</div>
+          <div class="flashcard-hint">💡 Perhatikan definisi masing-masing...</div>
+          <span class="reveal-tag">Tap untuk jawaban</span>
+          <div class="flashcard-a">✅ <strong>Benar.</strong> Matriks satuan adalah matriks diagonal khusus di mana semua elemen diagonalnya bernilai 1. Jadi I adalah subkasus dari matriks diagonal.</div>
+        </div>
+
+        <div class="flashcard" onclick="revealCard(this)">
+          <div class="flashcard-q">❓ Matriks A dikatakan simetris jika... (lengkapi!)</div>
+          <div class="flashcard-hint">💡 Kaitkan dengan transposnya</div>
+          <span class="reveal-tag">Tap untuk jawaban</span>
+          <div class="flashcard-a">✅ Matriks A dikatakan simetris jika <strong>A = Aᵀ</strong>, artinya setiap elemen aᵢⱼ = aⱼᵢ.</div>
+        </div>
+
+        <div class="flashcard" onclick="revealCard(this)">
+          <div class="flashcard-q">❓ Diketahui orde A₃ₓ₁, E₁ₓ₃. Apakah EA bisa dihitung? Berapakah ordenya?</div>
+          <div class="flashcard-hint">💡 Cek: kolom E = baris A?</div>
+          <span class="reveal-tag">Tap untuk jawaban</span>
+          <div class="flashcard-a">✅ <strong>Bisa!</strong> Kolom E = 3, Baris A = 3 ✓. Hasil EA berorde <strong>1×1</strong> (skalar).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: POIN KUNCI -->
+  <div class="section" data-section="7">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(67,233,123,0.15);">⭐</div>
+      <div>
+        <div class="section-title">7. 7 Poin Kunci untuk Diingat</div>
+        <div class="section-subtitle">Ringkasan esensial sebelum kuis</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="key-points">
+        <div class="key-point">
+          <div class="key-point-icon">1️⃣</div>
+          <div>Orde matriks selalu ditulis <strong>baris × kolom</strong>. Urutan ini penting!</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-icon">2️⃣</div>
+          <div>Dua matriks <strong>sama</strong> → ukuran harus identik dan setiap elemen bersesuaian sama.</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-icon">3️⃣</div>
+          <div>Matriks <strong>Satuan (I)</strong> berperan seperti angka 1 dalam perkalian: A × I = A.</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-icon">4️⃣</div>
+          <div>Transpos = baris jadi kolom. Matriks <strong>simetris ↔ A = Aᵀ</strong>.</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-icon">5️⃣</div>
+          <div>Penjumlahan: orde harus <strong>sama persis</strong>. Tidak bisa menjumlah matriks beda ukuran.</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-icon">6️⃣</div>
+          <div>Perkalian A×B: <strong>kolom A = baris B</strong>. Hasil berorde (baris A) × (kolom B).</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-icon">7️⃣</div>
+          <div>Matriks <strong>Nol</strong> memenuhi syarat: diagonal ✓ segitiga atas ✓ segitiga bawah ✓ simetris ✓ sekaligus!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KUIS LINKS -->
+  <div class="section" style="background: transparent; border: none; box-shadow: none; text-align: center; margin-top: 40px; padding-bottom: 20px;">
+    <h3 style="color: var(--text); margin-bottom: 24px; font-size: 20px;">Uji Pemahamanmu Sekarang!</h3>
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://gemini.google.com/share/0f176148023f" target="_blank" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%); color: #fff; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 15px; box-shadow: 0 8px 20px rgba(108,99,255,0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 24px rgba(108,99,255,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(108,99,255,0.3)';">
+        🎯 Coba Kuis 1 (Latihan Tambahan)
+      </a>
+      <a href="https://gemini.google.com/share/8c9f0994dcf4" target="_blank" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #ff6584 0%, #f9a825 100%); color: #fff; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 15px; box-shadow: 0 8px 20px rgba(255,101,132,0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 24px rgba(255,101,132,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(255,101,132,0.3)';">
+        🧠 Coba Kuis 2 (Soal Intensif M1)
+      </a>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- BACK TO TOP -->
+<button class="back-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
+
+<script>
+  // Toggle section
+  function toggleSection(header) {
+    const section = header.closest('.section');
+    section.classList.toggle('open');
+    updateProgress();
+  }
+
+  // Reveal flashcard
+  function revealCard(card) {
+    card.classList.toggle('revealed');
+    const tag = card.querySelector('.reveal-tag');
+    tag.textContent = card.classList.contains('revealed') ? 'Tersembunyi' : 'Tap untuk jawaban';
+    updateProgress();
+  }
+
+  // Progress tracker
+  function updateProgress() {
+    const totalSections = 7;
+    const openSections = document.querySelectorAll('.section.open').length;
+    const revealedCards = document.querySelectorAll('.flashcard.revealed').length;
+    const totalCards = document.querySelectorAll('.flashcard').length;
+    const score = (openSections / totalSections * 60) + (revealedCards / totalCards * 40);
+    const pct = Math.min(100, Math.round(score));
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  }
+
+  // Auto open first section
+  updateProgress();
+</script>
+
+  <!-- SITE FOOTER -->
+  <div class="site-footer">
+    <a href="https://github.com/AchmadDani" target="_blank" rel="noopener">
+      2026 daniganteng
+    </a>
+  </div>
+</body>
+</html>
+

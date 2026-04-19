@@ -1,0 +1,409 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAVEK M3 - Determinan Matriks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #252936;
+      --text: #e2e8f0; --text-muted: #8892b0; --text-dim: #5c6278;
+      --accent: #6c63ff; --card-glow: rgba(108,99,255,0.15); --border: #2e3350;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+    body { background-color:var(--bg); color:var(--text); line-height:1.6; }
+    .hero { background:linear-gradient(135deg,#0f1117 0%,#1a1333 50%,#0f1117 100%); border-bottom:1px solid var(--border); padding:60px 24px 40px; text-align:center; position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; width:600px; height:600px; background:radial-gradient(circle,rgba(108,99,255,0.12) 0%,transparent 70%); top:-200px; left:50%; transform:translateX(-50%); pointer-events:none; }
+    .hero-badge { display:inline-block; background:rgba(108,99,255,0.2); color:#a78bfa; padding:6px 14px; border-radius:20px; font-size:13px; font-weight:700; letter-spacing:0.5px; margin-bottom:16px; position:relative; z-index:2; }
+    .hero h1 { font-size:36px; font-weight:800; margin-bottom:12px; letter-spacing:-0.5px; position:relative; z-index:2; }
+    .hero p { font-size:15px; color:var(--text-muted); max-width:500px; margin:0 auto 24px; position:relative; z-index:2; }
+    .hero-stats { display:flex; gap:30px; justify-content:center; position:relative; z-index:2; flex-wrap:wrap; }
+    .stat { text-align:center; }
+    .stat-num { font-size:24px; font-weight:800; color:#fff; line-height:1.2; }
+    .stat-label { font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+    .dashboard-link { position:absolute; top:24px; left:24px; color:var(--text-muted); text-decoration:none; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; transition:color 0.2s; z-index:10; }
+    .dashboard-link:hover { color:#fff; }
+    .progress-bar-wrap { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 24px; position:sticky; top:0; z-index:100; backdrop-filter:blur(10px); display:flex; align-items:center; gap:16px; }
+    .progress-label { font-size:12px; color:var(--text-muted); white-space:nowrap; }
+    .progress-track { flex:1; height:6px; background:var(--border); border-radius:6px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,#6c63ff,#ff6584); border-radius:6px; transition:width 0.5s ease; width:0%; }
+    .progress-pct { font-size:12px; color:#a78bfa; font-weight:700; min-width:36px; }
+    .container { max-width:900px; margin:0 auto; padding:40px 24px; }
+    .section { margin-bottom:32px; background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:box-shadow 0.3s ease; }
+    .section:hover { box-shadow:0 0 0 1px var(--accent),0 8px 40px var(--card-glow); }
+    .section-header { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; background:var(--surface2); border-bottom:1px solid var(--border); user-select:none; transition:background 0.2s; }
+    .section-header:hover { background:#252940; }
+    .section-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .section-title { flex:1; font-size:16px; font-weight:700; }
+    .section-subtitle { font-size:12px; color:var(--text-muted); margin-top:2px; font-weight:400; }
+    .chevron { color:var(--text-muted); font-size:18px; transition:transform 0.3s ease; }
+    .section.open .chevron { transform:rotate(180deg); }
+    .section-body { display:none; padding:24px; animation:fadeIn 0.3s ease; }
+    .section.open .section-body { display:block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .info-box,.warn-box,.success-box,.formula-block { padding:16px 20px; margin:16px 0; border-radius:8px; font-size:14px; line-height:1.7; }
+    .info-box { background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.3); border-left:4px solid #6c63ff; }
+    .warn-box { background:rgba(255,101,132,0.08); border:1px solid rgba(255,101,132,0.3); border-left:4px solid #ff6584; }
+    .success-box { background:rgba(67,233,123,0.08); border:1px solid rgba(67,233,123,0.3); border-left:4px solid #43e97b; }
+    .formula-block { background:var(--bg); border:1px solid rgba(108,99,255,0.3); font-family:'JetBrains Mono',monospace; color:#a78bfa; }
+    .box-title { font-weight:700; margin-bottom:8px; }
+    .step-list { list-style:none; margin-top:12px; }
+    .step-list li { display:flex; gap:14px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; line-height:1.6; }
+    .step-list li:last-child { border-bottom:none; }
+    .step-num { width:28px; height:28px; background:rgba(108,99,255,0.2); border:1px solid rgba(108,99,255,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#a78bfa; flex-shrink:0; margin-top:2px; }
+    .back-btn { position:fixed; bottom:32px; right:32px; width:48px; height:48px; background:var(--accent); border:none; border-radius:50%; color:#fff; font-size:20px; cursor:pointer; box-shadow:0 4px 20px rgba(108,99,255,0.5); display:flex; align-items:center; justify-content:center; transition:all 0.25s; z-index:200; }
+    .back-btn:hover { transform:scale(1.1); background:#7c75ff; }
+    .tag { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; margin:2px 4px 2px 0; }
+    .tag-purple { background:rgba(108,99,255,0.2); color:#a78bfa; }
+    .tag-green  { background:rgba(67,233,123,0.2); color:#43e97b; }
+    .tag-red    { background:rgba(255,101,132,0.2); color:#ff6584; }
+    .tag-yellow { background:rgba(249,168,37,0.2); color:#f9a825; }
+    h3 { font-size:15px; font-weight:700; color:#fff; margin:20px 0 10px; }
+    p { font-size:14px; line-height:1.8; color:var(--text-muted); margin-bottom:12px; }
+    code { font-family:'JetBrains Mono',monospace; background:rgba(108,99,255,0.15); color:#a78bfa; padding:2px 7px; border-radius:5px; font-size:13px; }
+    /* DRY-RUN */
+    .drv { border:1px solid var(--border); border-radius:12px; background:var(--bg); overflow:hidden; margin-top:20px; }
+    .drv-ctrl { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:var(--surface2); border-bottom:1px solid var(--border); }
+    .drv-btn { background:rgba(108,99,255,0.2); color:#a78bfa; border:1px solid rgba(108,99,255,0.3); padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:13px; transition:all 0.2s; }
+    .drv-btn:hover:not(:disabled) { background:rgba(108,99,255,0.4); transform:translateY(-1px); }
+    .drv-btn:disabled { opacity:0.3; cursor:not-allowed; }
+    .drv-title { font-weight:700; font-size:14px; color:#fff; text-align:center; }
+    .drv-slide { display:none; padding:24px 20px; flex-direction:column; align-items:center; animation:fadeIn 0.4s ease; }
+    .drv-slide.active { display:flex; }
+    .drv-op { font-family:'JetBrains Mono',monospace; background:var(--surface); padding:8px 16px; border-radius:8px; margin-bottom:16px; color:#a78bfa; font-size:13px; border:1px dashed rgba(108,99,255,0.4); font-weight:700; text-align:center; }
+    .drv-matrix { display:inline-block; position:relative; padding:8px 16px; font-family:'JetBrains Mono',monospace; font-size:15px; line-height:2.4; }
+    .drv-matrix::before,.drv-matrix::after { content:''; position:absolute; top:0; bottom:0; width:4px; border:2px solid #a78bfa; }
+    .drv-matrix::before { left:0; border-right:none; border-radius:3px 0 0 3px; }
+    .drv-matrix::after  { right:0; border-left:none; border-radius:0 3px 3px 0; }
+    .drv-row { display:flex; gap:16px; }
+    .drv-cell { min-width:38px; text-align:center; color:var(--text); padding:3px 6px; border-radius:4px; transition:all 0.3s; }
+    .drv-cell.cross-row { background:rgba(255,101,132,0.15); color:#ff6584; font-weight:700; text-decoration:line-through; opacity:0.5; }
+    .drv-cell.cross-col { background:rgba(255,101,132,0.15); color:#ff6584; font-weight:700; text-decoration:line-through; opacity:0.5; }
+    .drv-cell.pivot { background:rgba(108,99,255,0.3); color:#a78bfa; font-weight:800; transform:scale(1.3); box-shadow:0 0 8px rgba(108,99,255,0.5); }
+    .drv-result { margin-top:16px; font-size:14px; font-weight:700; color:#43e97b; background:rgba(67,233,123,0.1); padding:12px 20px; border-radius:8px; border:1px solid rgba(67,233,123,0.3); text-align:center; line-height:1.8; }
+    /* ── FOOTER COPYRIGHT ── */
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px;
+      text-align: center;
+      border-top: 1px solid #2e3350;
+      background: transparent;
+    }
+    .site-footer a {
+      color: #8892b0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .site-footer a:hover { color: #fff; }
+    .site-footer a::before { content: '©'; margin-right: 2px; }  </style>
+</head>
+<body>
+
+<div class="hero">
+  <a href="index.html" class="dashboard-link">← Kembali ke Dashboard</a>
+  <div class="hero-badge">MAVEK MINGGU 3</div>
+  <h1>Determinan</h1>
+  <p>Konsep Determinan Matriks melalui Permutasi, Operasi Baris Elementer (OBE), dan Ekspansi Kofaktor.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Topik Utama</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Metode Cek</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">Sifat Kunci</div></div>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <span class="progress-label">📖 Progress Belajar</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-pct" id="progressPct">0%</span>
+</div>
+
+<div class="container">
+
+  <!-- SECTION 1 -->
+  <div class="section open">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(108,99,255,0.15);">🔢</div>
+      <div>
+        <div class="section-title">1. Permutasi dan Hasil Kali Elementer</div>
+        <div class="section-subtitle">Fondasi matematika dari perhitungan determinan</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Determinan didefinisikan sebagai <strong>penjumlahan hasil kali elementer bertanda</strong> dari sebuah matriks. Pada matriks <code>n×n</code>, hasil kali elementer adalah hasil kali <code>n</code> unsur tanpa pengulangan baris maupun kolom.</p>
+      <div class="formula-block">
+        Determinan 2×2:  det([[a,b],[c,d]]) = ad − bc<br><br>
+        Contoh: A = [[1,2],[3,4]]<br>
+        det(A) = (1×4) − (2×3) = 4 − 6 = <strong>−2</strong>
+      </div>
+      <div class="success-box">
+        <div class="box-title">Tanda Kofaktor: Pola Checkerboard</div>
+        Tanda (+/−) bergantian mirip papan catur:<br>
+        <span style="font-family:'JetBrains Mono'; font-size:15px; color:#43e97b;">+ − +<br>− + −<br>+ − +</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(255,101,132,0.15);">🛠️</div>
+      <div>
+        <div class="section-title">2. Determinan dengan OBE</div>
+        <div class="section-subtitle">Ubah ke segitiga lalu kalikan diagonal</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Matriks segitiga atas/bawah punya sifat istimewa: <strong style="color:#ff6584">det = hasil kali semua elemen diagonal!</strong></p>
+      <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:16px;">
+        <thead>
+          <tr>
+            <th style="padding:12px; background:var(--surface2); text-align:left; border-bottom:1px solid var(--border);">Tipe OBE</th>
+            <th style="padding:12px; background:var(--surface2); text-align:left; border-bottom:1px solid var(--border);">Efek ke Determinan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:12px; border-bottom:1px solid var(--border);"><code>b₁ ↔ b₂</code> (Tukar baris)</td><td style="padding:12px; border-bottom:1px solid var(--border);">det berubah tanda: <code>det(B) = −det(A)</code></td></tr>
+          <tr><td style="padding:12px; border-bottom:1px solid var(--border);"><code>k × bᵢ</code> (Kalikan baris)</td><td style="padding:12px; border-bottom:1px solid var(--border);">det ikut dikali k: <code>det(B) = k·det(A)</code></td></tr>
+          <tr><td style="padding:12px;"><code>k·b₁ + b₂</code> (Tambah kelipatan)</td><td style="padding:12px;"><strong>TIDAK MENGUBAH</strong> det: <code>det(B) = det(A)</code></td></tr>
+        </tbody>
+      </table>
+      <div class="info-box" style="margin-top:16px;">
+        <div class="box-title">Strategi Cepat</div>
+        Gunakan OBE tipe ke-3 (tambah kelipatan baris) dengan bebas karena tidak merusak nilai determinan!
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: DRY-RUN KOFAKTOR -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(67,233,123,0.15);">🎬</div>
+      <div>
+        <div class="section-title">3. Dry-Run Interaktif: Ekspansi Kofaktor 3×3</div>
+        <div class="section-subtitle">Ikuti tiap langkah pencoretan minor secara visual</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Ekspansi Kofaktor = pilih satu baris/kolom, lalu jumlahkan tiap elemen dikali kofaktornya. Kita pakai <strong>Baris 1</strong>.</p>
+      <div class="info-box">
+        <div class="box-title">Soal</div>
+        Hitung det(A) dari:<br>
+        A = <span style="font-family:'JetBrains Mono'; color:#fff;">[[2, 1, -1], [3, 2, 0], [-1, 0, 2]]</span><br>
+        Rumus Baris 1: <code>det(A) = 2·C₁₁ + 1·C₁₂ + (−1)·C₁₃</code>
+      </div>
+
+      <div class="drv" id="drv3">
+        <div class="drv-ctrl">
+          <button class="drv-btn" id="dPrev3" onclick="drvNav('drv3',-1)" disabled>← Mundur</button>
+          <div class="drv-title" id="dTitle3">Langkah 0 dari 4: Matriks Awal</div>
+          <button class="drv-btn" id="dNext3" onclick="drvNav('drv3',1)">Maju →</button>
+        </div>
+
+        <!-- SLIDE 0 -->
+        <div class="drv-slide active">
+          <div class="drv-op">Matriks A — akan diekspansi dari Baris ke-1</div>
+          <div class="drv-matrix">
+            <div class="drv-row"><div class="drv-cell">2</div><div class="drv-cell">1</div><div class="drv-cell">−1</div></div>
+            <div class="drv-row"><div class="drv-cell">3</div><div class="drv-cell">2</div><div class="drv-cell">0</div></div>
+            <div class="drv-row"><div class="drv-cell">−1</div><div class="drv-cell">0</div><div class="drv-cell">2</div></div>
+          </div>
+          <p style="margin-top:12px; color:var(--text-muted); font-size:13px;">Tekan Maju → untuk mulai ekspansi elemen pertama.</p>
+        </div>
+
+        <!-- SLIDE 1 -->
+        <div class="drv-slide">
+          <div class="drv-op">Kofaktor C₁₁ — Coret Baris 1 & Kolom 1, elemen aktif: a₁₁ = 2</div>
+          <div class="drv-matrix">
+            <div class="drv-row"><div class="drv-cell pivot">2</div><div class="drv-cell cross-col">1</div><div class="drv-cell cross-col">−1</div></div>
+            <div class="drv-row"><div class="drv-cell cross-row">3</div><div class="drv-cell">2</div><div class="drv-cell">0</div></div>
+            <div class="drv-row"><div class="drv-cell cross-row">−1</div><div class="drv-cell">0</div><div class="drv-cell">2</div></div>
+          </div>
+          <div class="drv-result">
+            Sub-matriks: [[2, 0], [0, 2]]<br>
+            M₁₁ = (2×2) − (0×0) = <strong>4</strong><br>
+            C₁₁ = (−1)^(1+1) × 4 = <strong>+4</strong><br>
+            Kontribusi: a₁₁ × C₁₁ = 2 × 4 = <span style="color:#ffd700; font-size:16px;">+8</span>
+          </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="drv-slide">
+          <div class="drv-op">Kofaktor C₁₂ — Coret Baris 1 & Kolom 2, elemen aktif: a₁₂ = 1</div>
+          <div class="drv-matrix">
+            <div class="drv-row"><div class="drv-cell cross-col">2</div><div class="drv-cell pivot">1</div><div class="drv-cell cross-col">−1</div></div>
+            <div class="drv-row"><div class="drv-cell cross-row">3</div><div class="drv-cell" style="opacity:0.3;">·</div><div class="drv-cell">0</div></div>
+            <div class="drv-row"><div class="drv-cell cross-row">−1</div><div class="drv-cell" style="opacity:0.3;">·</div><div class="drv-cell">2</div></div>
+          </div>
+          <div class="drv-result">
+            Sub-matriks: [[3, 0], [−1, 2]]<br>
+            M₁₂ = (3×2) − (0×−1) = <strong>6</strong><br>
+            C₁₂ = (−1)^(1+2) × 6 = <strong>−6</strong><br>
+            Kontribusi: a₁₂ × C₁₂ = 1 × (−6) = <span style="color:#ffd700; font-size:16px;">−6</span>
+          </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="drv-slide">
+          <div class="drv-op">Kofaktor C₁₃ — Coret Baris 1 & Kolom 3, elemen aktif: a₁₃ = −1</div>
+          <div class="drv-matrix">
+            <div class="drv-row"><div class="drv-cell cross-col">2</div><div class="drv-cell cross-col">1</div><div class="drv-cell pivot">−1</div></div>
+            <div class="drv-row"><div class="drv-cell">3</div><div class="drv-cell">2</div><div class="drv-cell cross-row">0</div></div>
+            <div class="drv-row"><div class="drv-cell">−1</div><div class="drv-cell">0</div><div class="drv-cell cross-row">2</div></div>
+          </div>
+          <div class="drv-result">
+            Sub-matriks: [[3, 2], [−1, 0]]<br>
+            M₁₃ = (3×0) − (2×−1) = <strong>2</strong><br>
+            C₁₃ = (−1)^(1+3) × 2 = <strong>+2</strong><br>
+            Kontribusi: a₁₃ × C₁₃ = (−1) × 2 = <span style="color:#ffd700; font-size:16px;">−2</span>
+          </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="drv-slide">
+          <div class="drv-op">🏁 Jumlahkan semua kontribusi!</div>
+          <div style="background:var(--surface); padding:24px 32px; border-radius:12px; text-align:center;">
+            <div style="font-size:14px; color:var(--text-muted); margin-bottom:12px;">det(A) = (a₁₁·C₁₁) + (a₁₂·C₁₂) + (a₁₃·C₁₃)</div>
+            <div style="font-size:18px; margin-bottom:16px; font-family:'JetBrains Mono';">
+              = <span style="color:#ffd700">8</span> + <span style="color:#ffd700">(−6)</span> + <span style="color:#ffd700">(−2)</span>
+            </div>
+            <div style="font-size:32px; font-weight:800; color:#43e97b; border:2px solid #43e97b; display:inline-block; padding:8px 28px; border-radius:12px;">det(A) = 0</div>
+            <p style="color:#ff6584; margin-top:12px; font-size:13px; font-weight:700;">⚠️ det = 0 → Matriks Singular → Tidak punya Invers!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-box" style="margin-top:16px;">
+        <div class="box-title">💡 Pro Tip</div>
+        Selalu ekspansi dari baris/kolom yang paling banyak mengandung <strong>angka 0</strong>. Tiap elemen 0 otomatis gugur sehingga hitungan menjadi jauh lebih ringkas!
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(249,168,37,0.15);">📜</div>
+      <div>
+        <div class="section-title">4. Sifat-Sifat Penting Determinan</div>
+        <div class="section-subtitle">Sifat praktis dalam perhitungan matriks</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:var(--bg); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="font-size:20px; flex-shrink:0;">1️⃣</div>
+          <div style="font-size:14px; color:var(--text-muted);">Jika ada baris atau kolom yang semua isi-nya nol, maka <strong style="color:#fff">det(A) = 0</strong> otomatis.</div>
+        </div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="font-size:20px; flex-shrink:0;">2️⃣</div>
+          <div style="font-size:14px; color:var(--text-muted);">Transpos tidak mengubah determinan: <strong style="color:#fff">det(A) = det(Aᵀ)</strong>.</div>
+        </div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="font-size:20px; flex-shrink:0;">3️⃣</div>
+          <div style="font-size:14px; color:var(--text-muted);">Perkalian matriks membagi determinan: <strong style="color:#fff">det(A×B) = det(A)×det(B)</strong>.</div>
+        </div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="font-size:20px; flex-shrink:0;">4️⃣</div>
+          <div style="font-size:14px; color:var(--text-muted);">Determinan invers = kebalikannya: <strong style="color:#fff">det(A⁻¹) = 1/det(A)</strong>. (Invers ada hanya jika det ≠ 0)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(108,99,255,0.15);">🔁</div>
+      <div>
+        <div class="section-title">5. Invers Matriks via Adjoin & Kofaktor</div>
+        <div class="section-subtitle">Alternatif mencari invers selain OBE</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="formula-block" style="text-align:center; font-size:17px; padding:20px;">
+        A⁻¹ = (1 / det(A)) × adj(A)
+      </div>
+      <p>Dimana <code>adj(A)</code> (Adjoin) = Transpos dari Matriks Kofaktor.</p>
+      <ul class="step-list">
+        <li><span class="step-num">1</span><span>Hitung det(A). Jika nol → berhenti, invers tidak ada.</span></li>
+        <li><span class="step-num">2</span><span>Hitung semua kofaktor Cᵢⱼ (ada 9 untuk matriks 3×3).</span></li>
+        <li><span class="step-num">3</span><span>Susun kofaktor-kofaktor ke dalam matriks Kofaktor.</span></li>
+        <li><span class="step-num">4</span><span>Transposkan matriks Kofaktor → itulah Adjoin adj(A).</span></li>
+        <li><span class="step-num">5</span><span>Kalikan semua elemen Adjoin dengan <code>1/det(A)</code>.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- KUIS -->
+  <div style="text-align:center; margin-top:40px; padding-bottom:20px;">
+    <h3 style="color:var(--text); margin-bottom:24px; font-size:20px;">Uji Pemahaman Materi Minggu 3!</h3>
+    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+      <a href="https://gemini.google.com/share/15cef9543734" target="_blank"
+         style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg,#6c63ff,#a78bfa); color:#fff; text-decoration:none; border-radius:30px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(108,99,255,0.3); transition:all 0.3s;"
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 24px rgba(108,99,255,0.4)';"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(108,99,255,0.3)';">
+        🎯 Coba Kuis Minggu 3
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<button class="back-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
+
+<script>
+  function toggleSection(header) {
+    header.closest('.section').classList.toggle('open');
+    updateProgress();
+  }
+  function updateProgress() {
+    const t = document.querySelectorAll('.section').length;
+    const o = document.querySelectorAll('.section.open').length;
+    const p = Math.min(100, Math.round((o/t)*100));
+    document.getElementById('progressFill').style.width = p+'%';
+    document.getElementById('progressPct').textContent = p+'%';
+  }
+
+  const slideTitles3 = [
+    'Langkah 0 dari 4: Matriks Awal',
+    'Langkah 1 dari 4: Kofaktor C₁₁ (a₁₁ = 2)',
+    'Langkah 2 dari 4: Kofaktor C₁₂ (a₁₂ = 1)',
+    'Langkah 3 dari 4: Kofaktor C₁₃ (a₁₃ = −1)',
+    'Langkah 4 dari 4: Hasil Akhir det(A)'
+  ];
+  let cur3 = 0;
+
+  function drvNav(id, dir) {
+    const slides = document.querySelectorAll(`#${id} .drv-slide`);
+    slides[cur3].classList.remove('active');
+    cur3 = Math.max(0, Math.min(slides.length - 1, cur3 + dir));
+    slides[cur3].classList.add('active');
+    document.getElementById('dTitle3').textContent = slideTitles3[cur3];
+    document.getElementById('dPrev3').disabled = cur3 === 0;
+    document.getElementById('dNext3').disabled = cur3 === slides.length - 1;
+  }
+
+  updateProgress();
+</script>
+
+  <!-- SITE FOOTER -->
+  <div class="site-footer">
+    <a href="https://github.com/AchmadDani" target="_blank" rel="noopener">
+      2026 daniganteng
+    </a>
+  </div>
+</body>
+</html>
+

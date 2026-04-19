@@ -1,0 +1,397 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAVEK M5 - Sistem Persamaan Linear (2)</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #252936;
+      --text: #e2e8f0;
+      --text-muted: #8892b0;
+      --text-dim: #5c6278;
+      
+      --accent: #feca57;
+      --card-glow: rgba(254, 202, 87, 0.15);
+      --border: #2e3350;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0f1117 0%, #3a3217 50%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(254,202,87,0.12) 0%, transparent 70%);
+      top: -200px; left: 50%; transform: translateX(-50%); pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block; background: rgba(254,202,87,0.2); color: #feca57;
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.5px; margin-bottom: 16px; position: relative; z-index: 2;
+    }
+    .hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; position: relative; z-index: 2;}
+    .hero p { font-size: 15px; color: var(--text-muted); max-width: 500px; margin: 0 auto 24px; position: relative; z-index: 2;}
+    
+    .hero-stats { display: flex; gap: 30px; justify-content: center; position: relative; z-index: 2; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.2; }
+    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+    .dashboard-link { position: absolute; top: 24px; left: 24px; color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: color 0.2s; z-index: 10; }
+    .dashboard-link:hover { color: #fff; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 16px; }
+    .progress-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .progress-track { flex: 1; height: 6px; background: var(--border); border-radius: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #feca57, #48dbfb); border-radius: 6px; transition: width 0.5s ease; width: 0%; }
+    .progress-pct { font-size: 12px; color: #feca57; font-weight: 700; min-width: 36px; }
+
+    /* ── MAIN LAYOUT ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: box-shadow 0.3s ease; }
+    .section:hover { box-shadow: 0 0 0 1px var(--accent), 0 8px 40px var(--card-glow); }
+    .section-header { display: flex; align-items: center; gap: 16px; padding: 20px 24px; cursor: pointer; background: var(--surface2); border-bottom: 1px solid var(--border); user-select: none; transition: background 0.2s; }
+    .section-header:hover { background: #252940; }
+    .section-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .section-title { flex: 1; font-size: 16px; font-weight: 700; }
+    .section-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
+    .chevron { color: var(--text-muted); font-size: 18px; transition: transform 0.3s ease; }
+    .section.open .chevron { transform: rotate(180deg); }
+    .section-body { display: none; padding: 24px; animation: fadeIn 0.3s ease; }
+    .section.open .section-body { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── BOXES & UTILS ── */
+    .info-box, .warn-box, .success-box, .formula-block { padding: 16px 20px; margin: 16px 0; border-radius: 8px; font-size: 14px; line-height: 1.7; }
+    .info-box { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.3); border-left: 4px solid #6c63ff; }
+    .warn-box { background: rgba(255,101,132,0.08); border: 1px solid rgba(255,101,132,0.3); border-left: 4px solid #ff6584; }
+    .success-box { background: rgba(67,233,123,0.08); border: 1px solid rgba(67,233,123,0.3); border-left: 4px solid #43e97b; }
+    .formula-block { background: var(--bg); border: 1px solid rgba(254,202,87,0.3); font-family: 'JetBrains Mono', monospace; color: #feca57; }
+    .box-title { font-weight: 700; margin-bottom: 8px; }
+    
+    .matrix-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin: 16px 0; justify-content: center;}
+    .matrix { display: inline-block; position: relative; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 2; border: 1px solid transparent;}
+    .matrix::before, .matrix::after { content: ''; position: absolute; top: 0; bottom: 0; width: 4px; border: 2px solid #feca57; }
+    .matrix::before { left: 0; border-right: none; border-radius: 3px 0 0 3px; }
+    .matrix::after  { right: 0; border-left: none;  border-radius: 0 3px 3px 0; }
+    .matrix-row { display: flex; gap: 10px; }
+    .matrix-cell { min-width: 38px; text-align: center; color: var(--text); padding: 2px 4px; border-radius: 4px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+
+    h3 { font-size: 15px; font-weight: 700; color: #fff; margin: 20px 0 10px; }
+    p { font-size: 14px; line-height: 1.8; color: var(--text-muted); margin-bottom: 12px; }
+    code { font-family: 'JetBrains Mono', monospace; background: rgba(254,202,87,0.15); color: #feca57; padding: 2px 7px; border-radius: 5px; font-size: 13px; }
+    
+    .back-btn { position: fixed; bottom: 32px; right: 32px; width: 48px; height: 48px; background: var(--accent); border: none; border-radius: 50%; color: #fff; font-size: 20px; cursor: pointer; box-shadow: 0 4px 20px rgba(254,202,87,0.5); display: flex; align-items: center; justify-content: center; transition: all 0.25s; z-index: 200; }
+    .back-btn:hover { transform: scale(1.1); background: #ffbe3b; }
+    
+    /* ── INTERACTIVE CRAMER ── */
+    .cramer-interactive { margin: 20px 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); text-align: center;}
+    .c-btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px;}
+    .c-btn { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;}
+    .c-btn:hover { background: rgba(108,99,255,0.15); border-color: rgba(108,99,255,0.5); }
+    .c-btn.active { background: rgba(108,99,255,0.2); color: #a78bfa; border-color: #6c63ff; }
+    .col-replace { background: rgba(255,101,132,0.2) !important; color: #ff6584 !important; font-weight: 700 !important; transform: scale(1.1); }
+    .bg-B { font-weight: bold; color: #ff6584; }
+
+    /* ── FOOTER COPYRIGHT ── */
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px;
+      text-align: center;
+      border-top: 1px solid #2e3350;
+      background: transparent;
+    }
+    .site-footer a {
+      color: #8892b0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .site-footer a:hover { color: #fff; }
+    .site-footer a::before { content: '©'; margin-right: 2px; }  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="index.html" class="dashboard-link">← Kembali ke Dashboard</a>
+  <div class="hero-badge">MAVEK MINGGU 5</div>
+  <h1>Sistem Persamaan Linear (2)</h1>
+  <p>Melangkah dari materi OBE, masuk ke jurus instan penyelesaian SPL menggunakan Matriks Balikam (Invers), metode ajaib Gabriel Cramer, dan karakteristik sistem Homogen.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">X=A⁻¹B</div><div class="stat-label">Invers Matriks</div></div>
+    <div class="stat"><div class="stat-num">Cramer</div><div class="stat-label">Substitusi Kolom</div></div>
+    <div class="stat"><div class="stat-num">Homogen</div><div class="stat-label">Konsisten Mutlak</div></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar-wrap">
+  <span class="progress-label">📖 Progress Belajar</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-pct" id="progressPct">0%</span>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- SECTION 1: EKSPLOITASI INVERS -->
+  <div class="section open" data-section="1">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(67,233,123,0.15); color: #43e97b;">🔁</div>
+      <div>
+        <div class="section-title">1. Solusi Akurat menggunakan Matriks Invers</div>
+        <div class="section-subtitle">Memindahkan Koefisien melintasi batas ekuivalen</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Jika kita mengubah deretan Sistem Persamaan Linear ke dalam bentuk perkalian murni <code>A × X = B</code>, adakah cara matematika untuk mengisolasi <code>X</code> sendirian? <strong>Tentu saja!</strong></p>
+      <p>Kita dapat mengalikan <strong>Matriks Invers A ($A^{-1}$)</strong> ke sisi kiri dan sisi kanan kurung kurawal. Mengapa? Karena $A \times A^{-1}$ secara magis adalah Matriks Identitas 1. Sehingga sisi kiri hancur menyisakan $X$ semata.</p>
+      
+      <div class="formula-block" style="text-align:center; font-size: 18px; padding: 24px;">
+        <div style="color:var(--text-muted); font-size:14px; margin-bottom:8px;">Bentuk Asal:</div>
+        A × X = B
+        <div style="color:var(--text-muted); font-size:14px; margin:16px 0 8px;">Dikalikan invers:</div>
+        <span style="color:#6c63ff;">A⁻¹</span> × A × X = <span style="color:#6c63ff;">A⁻¹</span> × B
+        <div style="color:var(--text-muted); font-size:14px; margin:16px 0 8px;">Rumus Akhir:</div>
+        <span style="font-size:24px; font-weight:800; color:#43e97b;">X = A⁻¹ B</span>
+      </div>
+
+      <div class="warn-box">
+        <div class="box-title">Syarat Mutlak: Matriks A TIDAK BOLEH SINGULAR</div>
+        Hukum tersebut bisa diruntuhkan jika $\det(A) = 0$. Karena bila determinan adalah nol, maka Invers $A^{-1}$ berwujud pecahan dibagi 0 yang mana mustahil. Jika determinan 0, urungkan niat Anda memecahkannya memakai metode ini.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CRAMER -->
+  <div class="section" data-section="2">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(108,99,255,0.15); color: #6c63ff;">🧩</div>
+      <div>
+        <div class="section-title">2. Metode Gabriel Cramer</div>
+        <div class="section-subtitle">Mencuri matriks hasil untuk menyeludup ke perbatasan koefisien</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Aturan Cramer mendobrak SPL dengan hanya mengandalkan rasio determinan. Metode ini tidak menuntut kita untuk mencari puluhan matriks Invers. Cukup hitung murni Determinan Matriks.</p>
+      
+      <p>Rumus Master Cramer sangat simpel:</p>
+      <div class="formula-block" style="text-align:center; font-size:18px;">
+        <span style="color:#a78bfa;">xᵢ</span> = 
+        <span style="border-bottom: 2px solid #a78bfa; padding-bottom: 4px;">det(A<sub style="font-size:10px;">i</sub>)</span><br>
+        <span style="display:inline-block; margin-top:4px;">det(A)</span>
+      </div>
+      
+      <p><strong>Bagaimana cara membantuk The $A_i$ Matrix?</strong> Sangat brilian. Masukan elemen/kolom dari matriks hasil <code>B</code> untuk **menggantikan** kolom yang berkaitan dengan variabel yang ingin kamu pecahkan!</p>
+
+      <!-- CRAMER INTERACTIVE -->
+      <h3 style="color:#6c63ff; text-align:center; margin-top:30px;">Dry-Run Substitusi Cramer</h3>
+      <p style="text-align:center; font-size:13px;">Tekan tombol di bawah untuk menyingkap metode penimpaan kolom matriks.</p>
+      
+      <div class="cramer-interactive">
+        <div class="c-btn-group">
+          <button class="c-btn active" onclick="setCramer(0, this)">Awal (Hitung det A)</button>
+          <button class="c-btn" onclick="setCramer(1, this)">Cari $x$ (A₁)</button>
+          <button class="c-btn" onclick="setCramer(2, this)">Cari $y$ (A₂)</button>
+          <button class="c-btn" onclick="setCramer(3, this)">Cari $z$ (A₃)</button>
+        </div>
+        
+        <div style="display:flex; justify-content:center; align-items:center; gap: 20px;">
+          <div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Matriks Utama (A) / (A_i)</div>
+            <div class="matrix" style="border-color:#6c63ff;" id="matCramer">
+              <div class="matrix-row">
+                <div class="matrix-cell c-col1">2</div><div class="matrix-cell c-col2">1</div><div class="matrix-cell c-col3">-1</div>
+              </div>
+              <div class="matrix-row">
+                <div class="matrix-cell c-col1">1</div><div class="matrix-cell c-col2">-1</div><div class="matrix-cell c-col3">1</div>
+              </div>
+              <div class="matrix-row">
+                <div class="matrix-cell c-col1">3</div><div class="matrix-cell c-col2">2</div><div class="matrix-cell c-col3">-2</div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="font-size:30px; color:#ff6584;" id="cramerArrow">＋</div>
+          
+          <div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Hasil Fisik (B)</div>
+            <div class="matrix" style="border-color:#ff6584; opacity:0.6;" id="matB">
+              <div class="matrix-row"><div class="matrix-cell bg-B">4</div></div>
+              <div class="matrix-row"><div class="matrix-cell bg-B">2</div></div>
+              <div class="matrix-row"><div class="matrix-cell bg-B">6</div></div>
+            </div>
+          </div>
+        </div>
+        
+        <p id="cramerDesc" style="margin-top:20px; font-weight:600; color:#a78bfa; border: 1px solid rgba(108,99,255,0.3); padding:10px; border-radius:8px; display:inline-block; border-left: 4px solid #6c63ff; background: rgba(108,99,255,0.1);">
+          Kondisi Normal. Determinan dari Matriks A ini menjadi angka "Pembagi". $\det(A) = 3$.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 3: HOMOGEN -->
+  <div class="section" data-section="3">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(255,101,132,0.15); color: #ff6b6b;">🕳️</div>
+      <div>
+        <div class="section-title">3. Sistem Linear Kosong (Homogen)</div>
+        <div class="section-subtitle">Bagaimana bila semua persamaannya berlabuh di angka 0?</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Sistem ini dinamakan Homogen dan memiliki bentuk absolut: <code>A × X = 0</code></p>
+      <p>Sistem ini <strong>semua ruas kanannya 0</strong>. Tidak ada harga dari hasil (Semua sama dengan nol).</p>
+      
+      <div class="success-box">
+        <div class="box-title">Keajaiban Sistem Homogen</div>
+        Sistem tipe ini berstatus KONSISTEN BAKA. Ia tidak pernah absen dalam mempunyai setidaknya satu solusi.<br>
+        Karena jika kita secara konyol menebak $x_1=0$, $x_2=0$, $x_3=0$ maka jawabannya akan selalu valid ($A \times 0$ = $0$). Tebakan manja ini dinamai sebagai <u>Solusi Trivial</u>.
+      </div>
+      
+      <p>Apakah ia punya rahasia / hasil lain selain $0,0,0$?</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; text-align: left;">
+        <thead style="background: rgba(254,202,87,0.1); border-bottom: 2px solid var(--border);">
+          <tr>
+            <th style="padding: 12px; border-right:1px solid var(--border);">Pemeriksaan Det(A)</th>
+            <th style="padding: 12px;">Hasil Resolusi Solusi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 16px; border-bottom: 1px solid var(--border); border-right:1px solid var(--border); color:#ff6584; font-weight:700;">
+              $\det(A) \neq 0$
+            </td>
+            <td style="padding: 16px; border-bottom: 1px solid var(--border);">
+              <strong>Satu-satunya Solusi Tunggal</strong>. Jawaban mentahnya terikat pada <u>Trivial</u> mutlak. Ia tidak eksis di koordinat lain, matriks koefisiennya tertata unik dan solid.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px; border-bottom: 1px solid var(--border); border-right:1px solid var(--border); color:#43e97b; font-weight:700;">
+              $\det(A) = 0$
+            </td>
+            <td style="padding: 16px; border-bottom: 1px solid var(--border);">
+              <strong>Banyak Solusi / Tak Terhingga</strong>. Koefisien-koefisiennya seing mengular / garisnya bertumpukan, ini berarti ada sekian pola angka tak nol $(p, q, \dots)$ yang jika dipadukan tetap terhenti pada angka nol!
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KUIS M5 -->
+  <div style="text-align:center; margin-top:40px; padding-bottom:20px;">
+    <h3 style="color:var(--text); margin-bottom:24px; font-size:20px;">Uji Pemahaman Materi Minggu 5!</h3>
+    <a href="https://gemini.google.com/share/4eb90bb11cef" target="_blank"
+       style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg,#feca57,#48dbfb); color:#000; text-decoration:none; border-radius:30px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(254,202,87,0.3); transition:all 0.3s;"
+       onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+      🎯 Coba Kuis Minggu 5
+    </a>
+  </div>
+
+</div><!-- /container -->
+
+<!-- BACK TO TOP -->
+<button class="back-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
+
+<script>
+  // Toggle section
+  function toggleSection(header) {
+    const section = header.closest('.section');
+    section.classList.toggle('open');
+    updateProgress();
+  }
+
+  // Progress tracker
+  function updateProgress() {
+    const totalSections = document.querySelectorAll('.section').length;
+    const openSections = document.querySelectorAll('.section.open').length;
+    const pct = Math.min(100, Math.round((openSections / totalSections) * 100));
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  }
+  
+  // Interactive Cramer logic
+  const M_A = [ [2, 1, -1], [1, -1, 1], [3, 2, -2] ];
+  const M_B = [ 4, 2, 6 ];
+
+  function setCramer(targetCol, btnEl) {
+    document.querySelectorAll('.c-btn').forEach(btn => btn.classList.remove('active'));
+    btnEl.classList.add('active');
+    
+    // reset cols
+    for(let r=0; r<3; r++){
+      document.querySelector(`.matrix-row:nth-child(${r+1}) .c-col1`).textContent = M_A[r][0];
+      document.querySelector(`.matrix-row:nth-child(${r+1}) .c-col2`).textContent = M_A[r][1];
+      document.querySelector(`.matrix-row:nth-child(${r+1}) .c-col3`).textContent = M_A[r][2];
+    }
+    document.querySelectorAll('#matCramer .matrix-cell').forEach(c => c.classList.remove('col-replace'));
+    
+    const desc = document.getElementById('cramerDesc');
+    const arrow = document.getElementById('cramerArrow');
+    const matB = document.getElementById('matB');
+    
+    if (targetCol === 0) {
+      arrow.textContent = '＋';
+      matB.style.opacity = '0.6';
+      desc.innerHTML = `Kondisi Normal. Determinan dari Matriks A ini menjadi angka "Pembagi". <br><strong>Hitungan det(A) = 3</strong>.`;
+    } else {
+      arrow.textContent = '←';
+      matB.style.opacity = '1';
+      // inject
+      for(let r=0; r<3; r++){
+        const cell = document.querySelector(`.matrix-row:nth-child(${r+1}) .c-col${targetCol}`);
+        cell.textContent = M_B[r];
+        cell.classList.add('col-replace');
+      }
+      
+      let varName = targetCol === 1 ? 'x' : targetCol === 2 ? 'y' : 'z';
+      if(targetCol === 1) desc.innerHTML = `Mencari nilai <strong>${varName}</strong>. Kolom B menginvasi Kolom 1 (kolom x). <br>Kita hitung determiannnya: $\\det(A_1) = 6$. Maka $x = 6/3 = $ <span style="color:#43e97b">2</span>`;
+      if(targetCol === 2) desc.innerHTML = `Mencari nilai <strong>${varName}</strong>. Kolom B menginvasi Kolom 2 (kolom y). <br>Kita hitung determiannnya: $\\det(A_2) = 3$. Maka $y = 3/3 = $ <span style="color:#43e97b">1</span>`;
+      if(targetCol === 3) desc.innerHTML = `Mencari nilai <strong>${varName}</strong>. Kolom B menginvasi Kolom 3 (kolom z). <br>Kita hitung determiannnya: $\\det(A_3) = 3$. Maka $z = 3/3 = $ <span style="color:#43e97b">1</span>`;
+    }
+  }
+
+  // Init
+  updateProgress();
+</script>
+
+
+  <!-- SITE FOOTER -->
+  <div class="site-footer">
+    <a href="https://github.com/AchmadDani" target="_blank" rel="noopener">
+      2026 daniganteng
+    </a>
+  </div>
+</body>
+</html>
+

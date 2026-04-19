@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAVEK - Dashboard Materi Interaktif</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --surface: #13151c;
+      --surface2: #1e212b;
+      --text: #e2e8f0;
+      --text-muted: #8892b0;
+      --text-dim: #5c6278;
+      
+      --accent: #6c63ff;
+      --card-glow: rgba(108, 99, 255, 0.15);
+      --border: #2e3350;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0b0c10 0%, #171230 50%, #0b0c10 100%);
+      padding: 80px 24px 60px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(108,99,255,0.1) 0%, transparent 70%);
+      top: -300px; left: 50%; transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(108,99,255,0.2);
+      color: #a78bfa;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 20px rgba(108,99,255,0.2);
+    }
+    .hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 16px; letter-spacing: -1px; }
+    .hero p { font-size: 16px; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+
+    /* ── DASHBOARD GRID ── */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 60px 24px;
+      flex: 1;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .module-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      text-decoration: none;
+      color: var(--text);
+      position: relative;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .module-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 40px var(--card-glow);
+    }
+
+    .module-card::after {
+      content: 'Buka Materi →';
+      position: absolute;
+      bottom: 28px;
+      left: 28px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+    .module-card:hover::after { opacity: 1; transform: translateX(0); }
+    .module-card:hover .module-desc { opacity: 0; transform: translateX(10px); }
+
+    .module-week {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px; height: 48px;
+      background: rgba(108,99,255,0.15);
+      color: #a78bfa;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .module-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; line-height: 1.4; }
+    
+    .module-desc { 
+      font-size: 14px; 
+      color: var(--text-muted); 
+      flex: 1; 
+      line-height: 1.6;
+      transition: all 0.3s ease;
+    }
+
+    .module-card.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .module-card.locked .module-week { background: var(--surface2); color: var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      font-size: 13px;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    @media (max-width: 768px) {
+      .hero { padding: 60px 20px 40px; }
+      .hero h1 { font-size: 32px; }
+      .container { padding: 40px 20px; }
+      .module-grid { grid-template-columns: 1fr; }
+    }
+    /* ── FOOTER COPYRIGHT ── */
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px;
+      text-align: center;
+      border-top: 1px solid #2e3350;
+      background: transparent;
+    }
+    .site-footer a {
+      color: #8892b0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .site-footer a:hover { color: #fff; }
+    .site-footer a::before { content: '©'; margin-right: 2px; }  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">CAK1MAB3 — S1 Informatika</div>
+    <h1>Matriks dan Ruang Vektor</h1>
+    <p>Portal pembelajaran interaktif. Modul dipecah per minggu untuk mempermudah pemahaman konsep dan latihan secara terstruktur.</p>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container">
+    <div class="module-grid">
+      
+      <!-- MINGGU 1 -->
+      <a href="ringkasan_minggu1.html" class="module-card">
+        <div class="module-week">M1</div>
+        <div class="module-title">Matriks dan Operasinya</div>
+        <div class="module-desc">Definisi matriks, jenis-jenis matriks, operasi penjumlahan, skalar, perkalian matriks, dan transposisi.</div>
+      </a>
+
+      <!-- MINGGU 2 (Dikerjakan selanjutnya) -->
+      <a href="ringkasan_minggu2.html" class="module-card">
+        <div class="module-week">M2</div>
+        <div class="module-title">Matriks dan Operasinya (2)</div>
+        <div class="module-desc">Lanjutan operasi matriks, sifat aljabar matriks, matriks invers dan operasi baris elementer (OBE).</div>
+      </a>
+
+      <!-- MINGGU 3 -->
+      <a href="ringkasan_minggu3.html" class="module-card">
+        <div class="module-week">M3</div>
+        <div class="module-title">Determinan</div>
+        <div class="module-desc">Konsep dasar determinan matriks, ekspansi kofaktor, dan sifat-sifat determinan.</div>
+      </a>
+
+      <!-- MINGGU 4 -->
+      <a href="ringkasan_minggu4.html" class="module-card">
+        <div class="module-week">M4</div>
+        <div class="module-title">Sistem Persamaan Linear</div>
+        <div class="module-desc">Pengenalan SPL, eliminasi Gauss berpembalik, dan bentuk eselon baris.</div>
+      </a>
+
+      <!-- MINGGU 5 -->
+      <a href="ringkasan_minggu5.html" class="module-card">
+        <div class="module-week">M5</div>
+        <div class="module-title">Sistem Persamaan Linear (2)</div>
+        <div class="module-desc">Sistem Persamaan Linear homogen, SPL dan kaitannya dengan inversibilitas matriks.</div>
+      </a>
+
+      <!-- MINGGU 6 -->
+      <a href="ringkasan_minggu6.html" class="module-card">
+        <div class="module-week">M6</div>
+        <div class="module-title">Ruang Vektor Euclidean</div>
+        <div class="module-desc">Vektor dalam ruang n, hasilkali titik (dot product), norma, dan jarak antar ruang.</div>
+      </a>
+
+      <!-- MINGGU 7 -->
+      <a href="ringkasan_minggu7.html" class="module-card">
+        <div class="module-week">M7</div>
+        <div class="module-title">Ruang Vektor Euclidean (2)</div>
+        <div class="module-desc">Ortogonalitas geometri linear, hasil kali silang vektor pada dimensi ruang rilis.</div>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>
+    Dibangun secara interaktif untuk mempermudah pemahaman | MAVEK Minggu 1-7
+  </footer>
+
+
+  <!-- SITE FOOTER -->
+  <div class="site-footer">
+    <a href="https://github.com/AchmadDani" target="_blank" rel="noopener">
+      2026 daniganteng
+    </a>
+  </div>
+</body>
+</html>
+

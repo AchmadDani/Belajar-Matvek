@@ -1,0 +1,600 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAVEK M2 - Matriks dan Operasinya (2)</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #252936;
+      --text: #e2e8f0;
+      --text-muted: #8892b0;
+      --text-dim: #5c6278;
+      
+      --accent: #6c63ff;
+      --card-glow: rgba(108, 99, 255, 0.15);
+      --border: #2e3350;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0f1117 0%, #1a1333 50%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+      top: -200px; left: 50%; transform: translateX(-50%); pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block; background: rgba(108,99,255,0.2); color: #a78bfa;
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.5px; margin-bottom: 16px; position: relative; z-index: 2;
+    }
+    .hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; position: relative; z-index: 2;}
+    .hero p { font-size: 15px; color: var(--text-muted); max-width: 500px; margin: 0 auto 24px; position: relative; z-index: 2;}
+    
+    .hero-stats {
+      display: flex; gap: 30px; justify-content: center; position: relative; z-index: 2; flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.2; }
+    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+    /* ── DASHBOARD LINK ── */
+    .dashboard-link {
+       position: absolute; top: 24px; left: 24px;
+       color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 600;
+       display: flex; align-items: center; gap: 8px; transition: color 0.2s; z-index: 10;
+    }
+    .dashboard-link:hover { color: #fff; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 12px 24px; position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(10px); display: flex; align-items: center; gap: 16px;
+    }
+    .progress-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .progress-track { flex: 1; height: 6px; background: var(--border); border-radius: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #6c63ff, #ff6584); border-radius: 6px; transition: width 0.5s ease; width: 0%; }
+    .progress-pct { font-size: 12px; color: #a78bfa; font-weight: 700; min-width: 36px; }
+
+    /* ── MAIN LAYOUT ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: box-shadow 0.3s ease; }
+    .section:hover { box-shadow: 0 0 0 1px var(--accent), 0 8px 40px var(--card-glow); }
+
+    .section-header { display: flex; align-items: center; gap: 16px; padding: 20px 24px; cursor: pointer; background: var(--surface2); border-bottom: 1px solid var(--border); user-select: none; transition: background 0.2s; }
+    .section-header:hover { background: #252940; }
+    .section-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .section-title { flex: 1; font-size: 16px; font-weight: 700; }
+    .section-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
+    .chevron { color: var(--text-muted); font-size: 18px; transition: transform 0.3s ease; }
+    .section.open .chevron { transform: rotate(180deg); }
+
+    .section-body { display: none; padding: 24px; animation: fadeIn 0.3s ease; }
+    .section.open .section-body { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── MATRIX DISPLAY ── */
+    .matrix-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin: 16px 0; }
+    .matrix { display: inline-block; position: relative; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 2; }
+    .matrix::before, .matrix::after { content: ''; position: absolute; top: 0; bottom: 0; width: 4px; border: 2px solid #a78bfa; }
+    .matrix::before { left: 0; border-right: none; border-radius: 3px 0 0 3px; }
+    .matrix::after  { right: 0; border-left: none;  border-radius: 0 3px 3px 0; }
+    .matrix-row { display: flex; gap: 20px; }
+    .matrix-cell { min-width: 32px; text-align: right; color: var(--text); }
+    .matrix-cell.diag { color: #6c63ff; font-weight: 700; }
+    .matrix-cell.hl { color: #ff6584; font-weight: 700; }
+    
+    /* ── HIGHLIGHT BOXES ── */
+    .info-box, .warn-box, .success-box, .formula-block { padding: 16px 20px; margin: 16px 0; border-radius: 8px; font-size: 14px; line-height: 1.7; }
+    .info-box { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.3); border-left: 4px solid #6c63ff; }
+    .warn-box { background: rgba(255,101,132,0.08); border: 1px solid rgba(255,101,132,0.3); border-left: 4px solid #ff6584; }
+    .success-box { background: rgba(67,233,123,0.08); border: 1px solid rgba(67,233,123,0.3); border-left: 4px solid #43e97b; }
+    .formula-block { background: var(--bg); border: 1px solid rgba(108,99,255,0.3); font-family: 'JetBrains Mono', monospace; color: #a78bfa; }
+    .box-title { font-weight: 700; margin-bottom: 8px; }
+    .info-box .box-title { color: #a78bfa; }
+    .warn-box .box-title { color: #ff6584; }
+    .success-box .box-title { color: #43e97b; }
+
+    /* ── STEP LIST ── */
+    .step-list { list-style: none; margin-top: 12px; }
+    .step-list li { display: flex; gap: 14px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.6; }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num { width: 28px; height: 28px; background: rgba(108,99,255,0.2); border: 1px solid rgba(108,99,255,0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #a78bfa; flex-shrink: 0; margin-top: 2px; }
+
+    /* ── SCROLLBACK ── */
+    .back-btn { position: fixed; bottom: 32px; right: 32px; width: 48px; height: 48px; background: var(--accent); border: none; border-radius: 50%; color: #fff; font-size: 20px; cursor: pointer; box-shadow: 0 4px 20px rgba(108,99,255,0.5); display: flex; align-items: center; justify-content: center; transition: all 0.25s; z-index: 200; }
+    .back-btn:hover { transform: scale(1.1); background: #7c75ff; }
+
+    /* ── TAGS & MISC ── */
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin: 2px 4px 2px 0; }
+    .tag-purple { background: rgba(108,99,255,0.2); color: #a78bfa; }
+    .tag-green  { background: rgba(67,233,123,0.2);  color: #43e97b; }
+    .tag-red    { background: rgba(255,101,132,0.2); color: #ff6584; }
+    .tag-yellow { background: rgba(249,168,37,0.2);  color: #f9a825; }
+
+    h3 { font-size: 15px; font-weight: 700; color: #fff; margin: 20px 0 10px; }
+    p { font-size: 14px; line-height: 1.8; color: var(--text-muted); margin-bottom: 12px; }
+    code { font-family: 'JetBrains Mono', monospace; background: rgba(108,99,255,0.15); color: #a78bfa; padding: 2px 7px; border-radius: 5px; font-size: 13px; }
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+    
+    /* ── OBE VIEWER ── */
+    .obe-viewer { border: 1px solid var(--border); border-radius: 12px; background: var(--bg); overflow: hidden; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);}
+    .obe-controls { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+    .obe-btn { background: rgba(108,99,255,0.2); color: #a78bfa; border: 1px solid rgba(108,99,255,0.3); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px; transition: all 0.2s; }
+    .obe-btn:hover:not(:disabled) { background: rgba(108,99,255,0.4); transform: translateY(-1px); box-shadow: 0 4px 12px var(--card-glow); }
+    .obe-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .obe-step-title { font-weight: 700; font-size: 14px; color: #fff; }
+    .obe-slide { display: none; padding: 40px 20px; justify-content: center; align-items: center; flex-direction: column; animation: fadeIn 0.4s ease;}
+    .obe-slide.active { display: flex; }
+    .row-hl-info { background: rgba(108,99,255,0.2) !important; border-radius: 4px; }
+    .row-hl-warn { background: rgba(255,101,132,0.2) !important; border-radius: 4px; }
+    .ope-desc { font-family: 'JetBrains Mono', monospace; background: var(--surface); padding: 10px 20px; border-radius: 8px; margin-bottom: 24px; color: #a78bfa; font-size: 14px; border: 1px dashed rgba(108,99,255,0.4); font-weight: 700;}
+    .matrix-row { padding: 4px; transition: background 0.3s; }
+
+    
+    /* ── FOOTER COPYRIGHT ── */
+    .site-footer {
+      margin-top: 60px;
+      padding: 24px;
+      text-align: center;
+      border-top: 1px solid #2e3350;
+      background: transparent;
+    }
+    .site-footer a {
+      color: #8892b0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .site-footer a:hover { color: #fff; }
+    .site-footer a::before { content: '©'; margin-right: 2px; }  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="index.html" class="dashboard-link">← Kembali ke Dashboard</a>
+  <div class="hero-badge">MAVEK MINGGU 2</div>
+  <h1>Matriks dan Operasinya (2)</h1>
+  <p>Melanjutkan sifat operasi matriks, Operasi Baris Elementer (OBE), Eselon Baris Tereduksi, hingga mencari Invers Matriks.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">Topik Utama</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Aturan OBE</div></div>
+    <div class="stat"><div class="stat-num">1</div><div class="stat-label">Metode Invers</div></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar-wrap">
+  <span class="progress-label">📖 Progress Belajar</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-pct" id="progressPct">0%</span>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- SECTION 1: SIFAT OPERASI MATRIKS -->
+  <div class="section open" data-section="1">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(108,99,255,0.15);">🔄</div>
+      <div>
+        <div class="section-title">1. Sifat Operasi Matriks</div>
+        <div class="section-subtitle">Hukum Komutatif, Asosiatif, dan Pengecualian pada Perkalian</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Walaupun mirip dengan aljabar bilangan biasa, matriks memiliki aturan keras terutama mengenai **komutatif perkalian**.</p>
+      
+      <div class="info-box">
+        <div class="box-title">Sifat-Sifat yang Berlaku</div>
+        A + B = B + A (Komutatif Penjumlahan)<br>
+        A + (B + C) = (A + B) + C (Asosiatif Penjumlahan)<br>
+        α(A + B) = αA + αB (Distributif Skalar terhadap Matriks)<br>
+        (α + β)A = αA + βA (Distributif Skalar)
+      </div>
+
+      <div class="warn-box">
+        <div class="box-title">⚠️ Perkalian Matriks TIDAK Komutatif</div>
+        Dalam operasi matriks, secara umum <code>A × B ≠ B × A</code>. Ini sangat penting!<br>
+        Bahkan ketika matriks dikalikan dengan transposnya sendiri, sifat komutatif tidak berlaku: <code>AAᵀ ≠ AᵀA</code>.
+      </div>
+      
+      <h3>Contoh Pembuktian AAᵀ ≠ AᵀA</h3>
+      <p>Diberikan matriks A (2×3). Mari kita lihat hasil dari dikalikan dengan transposnya (Aᵀ berukuran 3×2).</p>
+      
+      <div class="matrix-wrap" style="background: rgba(108,99,255,0.05); padding: 16px; border-radius: 12px; border: 1px dashed var(--border);">
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">A (2×3)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell">2</div><div class="matrix-cell">1</div><div class="matrix-cell">3</div></div>
+            <div class="matrix-row"><div class="matrix-cell">-2</div><div class="matrix-cell">-1</div><div class="matrix-cell">0</div></div>
+          </div>
+        </div>
+        <div style="font-size:24px;color:#a78bfa;">|</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Aᵀ (3×2)</div>
+          <div class="matrix">
+            <div class="matrix-row"><div class="matrix-cell">2</div><div class="matrix-cell">-2</div></div>
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">-1</div></div>
+            <div class="matrix-row"><div class="matrix-cell">3</div><div class="matrix-cell">0</div></div>
+          </div>
+        </div>
+      </div>
+      
+      <ul class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <span><code>AAᵀ</code> (Matriks 2×3 dikali 3×2) menghasilkan matriks berorde <strong>2×2</strong>.</span>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <span><code>AᵀA</code> (Matriks 3×2 dikali 2×3) menghasilkan matriks berorde <strong>3×3</strong>.</span>
+        </li>
+      </ul>
+      <p style="margin-top: 12px; color: #ff6584; font-weight: bold;">Terbukti: Karena ukurannya saja sudah berbeda (2×2 vs 3×3), mustahil perhitungan mereka sama. Jadi AAᵀ ≠ AᵀA.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: OPERASI BARIS ELEMENTER (OBE) -->
+  <div class="section" data-section="2">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(255,101,132,0.15);">🧮</div>
+      <div>
+        <div class="section-title">2. Operasi Baris Elementer (OBE)</div>
+        <div class="section-subtitle">Tiga aturan fundamental manipulasi matriks</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Operasi Baris Elementer (OBE) adalah metode krusial dalam aljabar linear. Hanya ada <strong>3 aksi dasar</strong> yang diizinkan untuk memanipulasi baris matriks.</p>
+      
+      <ul class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <div>
+            <strong>Pertukaran Baris</strong><br>
+            <span style="font-size: 13px; color: var(--text-muted);">Menukar posisi baris ke-i dengan baris ke-j. Notasi: <code>b₁ ↔ b₂</code></span>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div>
+            <strong>Mengkali Baris dengan Konstanta</strong><br>
+            <span style="font-size: 13px; color: var(--text-muted);">Mengalikan sebuah baris dengan angka tak-nol (misal 1/2 atau -3). Notasi: <code>½ b₁</code></span>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div>
+            <strong>Menambahkan Kelipatan Baris ke Baris Lain</strong><br>
+            <span style="font-size: 13px; color: var(--text-muted);">Menjumlahkan hasil perkalian suatu baris dengan baris lain. Ini dipakai untuk menciptakan elemen 'nol' di bawah diagonal. Notasi: <code>-2b₁ + b₂</code></span>
+          </div>
+        </li>
+      </ul>
+
+      <div class="success-box" style="margin-top: 24px;">
+        <div class="box-title">💡 Terminologi Penting</div>
+        <ul>
+          <li><strong>Baris Tak-Nol:</strong> Baris yang punya minimal 1 angka yang bukan nol.</li>
+          <li><strong>Satu Utama (Leading 1):</strong> Angka pertama bukan nol pada sebuah baris, yang secara ideal diubah menjadi angka 1.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: ESELON BARIS TEREDUKSI -->
+  <div class="section" data-section="3">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(67,233,123,0.15);">✨</div>
+      <div>
+        <div class="section-title">3. Eselon Baris Tereduksi</div>
+        <div class="section-subtitle">Kondisi akhir dari penyederhanaan matriks (Eliminasi Gauss-Jordan)</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>Hasil akhir mengeksekusi OBE terus-menerus akan menghasilkan bentuk <strong>Matriks Eselon Baris Tereduksi</strong>. Sebuah matriks dikatakan Tereduksi jika memenuhi 4 sifat berikut:</p>
+
+      <table class="styled-table" style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px;">
+        <tbody>
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);"><span class="tag tag-purple">Sifat 1</span></td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">Elemen pertama tak-nol pada baris tak-nol selalui bernilai <strong>1 (Satu Utama)</strong>.</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);"><span class="tag tag-green">Sifat 2</span></td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">Satu Utama di baris lebih bawah harus posisinya <strong>lebih ke kanan</strong> dari baris di atasnya (membentuk undakan).</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);"><span class="tag tag-red">Sifat 3</span></td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">Jika ada baris yang murni nol semua (0 0 0), ia harus diletakkan <strong>paling bawah</strong> matriks.</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);"><span class="tag tag-yellow">Sifat 4</span></td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">Di kolom yang terdapat <strong>Satu Utama</strong>, <strong>semua</strong> elemen lainnya (atas dan bawahnya) harus bernilai <strong>Nol (0)</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="info-box">
+        <div class="box-title">📝 Eliminasi Gauss vs Gauss-Jordan</div>
+        Jika matriks memenuhi Sifat 1, 2, 3 saja, itu disebut <strong>Eselon Baris</strong> (Proses Eliminasi Gauss).<br>
+        Jika matriks memenuhi seluruhnya Sifat 1, 2, 3, 4, itu disebut <strong>Eselon Baris Tereduksi</strong> (Proses Eliminasi Gauss-Jordan).
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: INVERS MATRIKS -->
+  <div class="section" data-section="4">
+    <div class="section-header" onclick="toggleSection(this)">
+      <div class="section-icon" style="background:rgba(249,168,37,0.15);">🔁</div>
+      <div>
+        <div class="section-title">4. Invers Matriks dengan OBE</div>
+        <div class="section-subtitle">Metode super ampuh membalik matriks (A → A⁻¹)</div>
+      </div>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p>B dinamakan matriks invers dari A (B = A⁻¹) jika ketika dikalikan menghasilkan Matriks Identitas: <code>A × A⁻¹ = I</code>.</p>
+      
+      <div class="formula-block">
+        <div class="formula-title">Trik Mencari Invers Menggunakan OBE</div>
+        Susun matriks A berdampingan dengan matriks Identitas I:<br>
+        [ A | I ]<br><br>
+        Lakukan OBE (Operasi Baris Elementer) dari atas sampai bawah sehingga sisi A (kiri) berubah menjadi Identitas I.<br>
+        Bentuk akhirnya akan menjadi:<br>
+        [ I | A⁻¹ ]
+      </div>
+
+      <div class="warn-box">
+        <div class="box-title">⚠️ Kapan Matriks Tidak Memiliki Invers?</div>
+        Jika saat melakukan OBE, pada sisi matriks A menghasilkan baris yang *seluruh elemennya nol*, maka <strong>matriks tersebut tidak memiliki invers (Singular)</strong>.
+      </div>
+      
+      <h3 style="color: #a78bfa; margin-top: 30px;">Dry-Run Interaktif: Mencari Invers dengan OBE</h3>
+      <p>Tekan tombol <strong>Selanjutnya</strong> untuk melihat proses iterasi baris demi baris hingga membuahkan invers (Eselon Baris Tereduksi).</p>
+
+      <div class="obe-viewer" id="viewer1">
+        <div class="obe-controls">
+          <button class="obe-btn" id="btnPrev1" onclick="obePrev('viewer1')" disabled>← Mundur</button>
+          <div class="obe-step-title" id="title1">Langkah 0: Kondisi Awal [ A | I ]</div>
+          <button class="obe-btn" id="btnNext1" onclick="obeNext('viewer1')">Maju →</button>
+        </div>
+
+        <!-- SLIDE 0 -->
+        <div class="obe-slide active" data-title="Langkah 0: Kondisi Awal [ A | I ]">
+          <div class="ope-desc">Siapkan matriks digabungkan dengan Identitas</div>
+          <div class="matrix" style="border-color: #6c63ff;">
+            <div class="matrix-row">
+              <div class="matrix-cell">3</div><div class="matrix-cell">2</div><div class="matrix-cell">-1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell diag">1</div><div class="matrix-cell">0</div><div class="matrix-cell">0</div>
+            </div>
+            <div class="matrix-row">
+              <div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell diag">1</div><div class="matrix-cell">0</div>
+            </div>
+            <div class="matrix-row">
+              <div class="matrix-cell">-2</div><div class="matrix-cell">-2</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell diag">1</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 1 -->
+        <div class="obe-slide" data-title="Langkah 1: Pindahkan Angka 1 ke Atas">
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">SEBELUM:</div>
+          <div class="matrix" style="opacity: 0.6; pointer-events:none;">
+            <div class="matrix-row"><div class="matrix-cell">3</div><div class="matrix-cell">2</div><div class="matrix-cell">-1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">-2</div><div class="matrix-cell">-2</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div></div>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; align-items:center; margin: 16px 0;">
+             <div style="font-size:20px; color:var(--accent); margin-bottom: 8px;">↓</div>
+             <div class="ope-desc" style="margin-bottom:0; padding:6px 16px;">Tukar Baris 1 ↔ Baris 2</div>
+             <div style="font-size:20px; color:var(--accent); margin-top: 8px;">↓</div>
+          </div>
+
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">HASIL (Satu Utama terbentuk di B1):</div>
+          <div class="matrix" style="border-color: #6c63ff;">
+            <div class="matrix-row row-hl-info"><div class="matrix-cell hl">1</div><div class="matrix-cell hl">1</div><div class="matrix-cell hl">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">0</div><div class="matrix-cell hl">1</div><div class="matrix-cell hl">0</div></div>
+            <div class="matrix-row row-hl-info"><div class="matrix-cell hl">3</div><div class="matrix-cell hl">2</div><div class="matrix-cell hl">-1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">1</div><div class="matrix-cell hl">0</div><div class="matrix-cell hl">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">-2</div><div class="matrix-cell">-2</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div></div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="obe-slide" data-title="Langkah 2: Nol-kan Kolom 1 di Bawah Diagonal">
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">SEBELUM:</div>
+          <div class="matrix" style="opacity: 0.6; pointer-events:none;">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">3</div><div class="matrix-cell">2</div><div class="matrix-cell">-1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">-2</div><div class="matrix-cell">-2</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div></div>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; align-items:center; margin: 16px 0;">
+             <div style="font-size:20px; color:var(--accent); margin-bottom: 8px;">↓</div>
+             <div class="ope-desc" style="margin-bottom:0; padding:6px 16px;">(-3 × B₁) + B₂ &nbsp;|&nbsp; (2 × B₁) + B₃</div>
+             <div style="font-size:20px; color:var(--accent); margin-top: 8px;">↓</div>
+          </div>
+
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">HASIL (Angka di bawah 1 jadi Nol):</div>
+          <div class="matrix" style="border-color: #6c63ff;">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row row-hl-warn"><div class="matrix-cell" style="color:#ff6584;">0</div><div class="matrix-cell hl">-1</div><div class="matrix-cell hl">-1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">1</div><div class="matrix-cell hl">-3</div><div class="matrix-cell hl">0</div></div>
+            <div class="matrix-row row-hl-warn"><div class="matrix-cell" style="color:#ff6584;">0</div><div class="matrix-cell hl">0</div><div class="matrix-cell hl">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">0</div><div class="matrix-cell hl">2</div><div class="matrix-cell hl">1</div></div>
+          </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="obe-slide" data-title="Langkah 3: Jadikan Satu Utama di Baris 2">
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">SEBELUM:</div>
+          <div class="matrix" style="opacity: 0.6; pointer-events:none;">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">-1</div><div class="matrix-cell">-1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">1</div><div class="matrix-cell">-3</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; align-items:center; margin: 16px 0;">
+             <div style="font-size:20px; color:var(--accent); margin-bottom: 8px;">↓</div>
+             <div class="ope-desc" style="margin-bottom:0; padding:6px 16px;">-1 × Baris 2</div>
+             <div style="font-size:20px; color:var(--accent); margin-top: 8px;">↓</div>
+          </div>
+
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">HASIL (Satu Utama B2 terbentuk):</div>
+          <div class="matrix" style="border-color: #6c63ff;">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row row-hl-info"><div class="matrix-cell hl">0</div><div class="matrix-cell hl" style="color:#a78bfa;">1</div><div class="matrix-cell hl">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">-1</div><div class="matrix-cell hl">3</div><div class="matrix-cell hl">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="obe-slide" data-title="Langkah 4: Eselon Baris (Eliminasi Maju Selesai)">
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">SEBELUM:</div>
+          <div class="matrix" style="opacity: 0.6; pointer-events:none;">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">-1</div><div class="matrix-cell">3</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; align-items:center; margin: 16px 0;">
+             <div style="font-size:20px; color:var(--accent); margin-bottom: 8px;">↓</div>
+             <div class="ope-desc" style="margin-bottom:0; padding:6px 16px;">(-1 × B₃) + B₂  <small style="color:white; font-weight:normal;">(Nol-kan angka diatas B3)</small></div>
+             <div style="font-size:20px; color:var(--accent); margin-top: 8px;">↓</div>
+          </div>
+
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">HASIL (Fase Eliminasi Mundur Dimulai):</div>
+          <div class="matrix" style="border-color: #6c63ff;">
+            <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row row-hl-warn"><div class="matrix-cell hl">0</div><div class="matrix-cell hl">1</div><div class="matrix-cell" style="color:#ff6584;">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">-1</div><div class="matrix-cell hl">1</div><div class="matrix-cell hl">-1</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell hl" style="color:#a78bfa;">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="obe-slide" data-title="Langkah 5: Eselon Baris TEREDUKSI (Selesai!)">
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">SEBELUM:</div>
+          <div class="matrix" style="opacity: 0.6; pointer-events:none;">
+             <div class="matrix-row"><div class="matrix-cell">1</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">-1</div><div class="matrix-cell">1</div><div class="matrix-cell">-1</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; align-items:center; margin: 16px 0;">
+             <div style="font-size:20px; color:var(--accent); margin-bottom: 8px;">↓</div>
+             <div class="ope-desc" style="margin-bottom:0; padding:6px 16px;">(-1 × B₂) + B₁ <small style="color:white; font-weight:normal;">(Nol-kan B1 menggunakan B2)</small></div>
+             <div style="font-size:20px; color:var(--accent); margin-top: 8px;">↓</div>
+          </div>
+
+          <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:10px;">HASIL AKHIR:</div>
+          <div class="matrix" style="border-color: #43e97b;">
+            <div class="matrix-row row-hl-info"><div class="matrix-cell hl" style="color:#43e97b;">1</div><div class="matrix-cell hl" style="color:#43e97b;">0</div><div class="matrix-cell hl" style="color:#43e97b;">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell hl">1</div><div class="matrix-cell hl">0</div><div class="matrix-cell hl">1</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell" style="color:#43e97b;">1</div><div class="matrix-cell">0</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">-1</div><div class="matrix-cell">1</div><div class="matrix-cell">-1</div></div>
+            <div class="matrix-row"><div class="matrix-cell">0</div><div class="matrix-cell">0</div><div class="matrix-cell" style="color:#43e97b;">1</div><div style="border-left: 2px dashed #444; margin: 0 10px;"></div><div class="matrix-cell">0</div><div class="matrix-cell">2</div><div class="matrix-cell">1</div></div>
+          </div>
+          
+          <div style="margin-top:20px; background: rgba(67,233,123,0.15); padding: 12px 24px; border-radius: 8px; color:#43e97b; font-weight:700;">Hore! Sisi kiri telah menjadi Identitas, yang berarti sisi kanan adalah Invers Matriksnya!</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- KUIS LINK M2 -->
+  <div style="text-align:center; margin-top: 40px; padding-bottom: 20px;">
+    <h3 style="color: var(--text); margin-bottom: 24px; font-size: 20px;">Uji Pemahaman Materi Minggu 2!</h3>
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://gemini.google.com/share/168558ab1271" target="_blank" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg,#6c63ff,#a78bfa); color:#fff; text-decoration:none; border-radius:30px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(108,99,255,0.3); transition:all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 24px rgba(108,99,255,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(108,99,255,0.3)';">
+        🎯 Coba Kuis Minggu 2
+      </a>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- BACK TO TOP -->
+<button class="back-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
+
+<script>
+  // Toggle section
+  function toggleSection(header) {
+    const section = header.closest('.section');
+    section.classList.toggle('open');
+    updateProgress();
+  }
+
+  // Progress tracker
+  function updateProgress() {
+    const totalSections = document.querySelectorAll('.section').length;
+    const openSections = document.querySelectorAll('.section.open').length;
+    const pct = Math.min(100, Math.round((openSections / totalSections) * 100));
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  }
+  
+  // Init
+  updateProgress();
+
+  // OBE interactivity
+  const obeState = { viewer1: 0 };
+  function obeUpdate(id) {
+    const viewer = document.getElementById(id);
+    const slides = viewer.querySelectorAll('.obe-slide');
+    const btnP = document.getElementById('btnPrev1');
+    const btnN = document.getElementById('btnNext1');
+    const title = document.getElementById('title1');
+    
+    slides.forEach((s, idx) => {
+      s.classList.remove('active');
+      if (idx === obeState[id]) {
+        s.classList.add('active');
+        title.textContent = s.getAttribute('data-title');
+      }
+    });
+
+    btnP.disabled = obeState[id] === 0;
+    btnN.disabled = obeState[id] === slides.length - 1;
+  }
+  
+  function obeNext(id) {
+    const slides = document.getElementById(id).querySelectorAll('.obe-slide');
+    if (obeState[id] < slides.length - 1) { obeState[id]++; obeUpdate(id); }
+  }
+  function obePrev(id) {
+    if (obeState[id] > 0) { obeState[id]--; obeUpdate(id); }
+  }
+</script>
+
+
+  <!-- SITE FOOTER -->
+  <div class="site-footer">
+    <a href="https://github.com/AchmadDani" target="_blank" rel="noopener">
+      2026 daniganteng
+    </a>
+  </div>
+</body>
+</html>
+
